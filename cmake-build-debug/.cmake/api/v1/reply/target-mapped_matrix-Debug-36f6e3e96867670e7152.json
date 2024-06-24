@@ -1,0 +1,157 @@
+{
+	"backtrace" : 2,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_custom_target",
+			"ei_add_test",
+			"add_dependencies"
+		],
+		"files" : 
+		[
+			"cmake-build-debug/_deps/eigen-src/cmake/EigenTesting.cmake",
+			"cmake-build-debug/_deps/eigen-src/test/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 195,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 210,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			}
+		]
+	},
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 3,
+			"id" : "mapped_matrix_1::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "mapped_matrix_2::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 5,
+			"id" : "mapped_matrix_3::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 6,
+			"id" : "mapped_matrix_4::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 7,
+			"id" : "mapped_matrix_5::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 8,
+			"id" : "mapped_matrix_11::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 9,
+			"id" : "mapped_matrix_6::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 10,
+			"id" : "mapped_matrix_7::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 11,
+			"id" : "mapped_matrix_8::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 12,
+			"id" : "mapped_matrix_9::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 13,
+			"id" : "mapped_matrix_10::@75e1563cc3333299b915"
+		}
+	],
+	"id" : "mapped_matrix::@75e1563cc3333299b915",
+	"name" : "mapped_matrix",
+	"paths" : 
+	{
+		"build" : "_deps/eigen-build/test",
+		"source" : "cmake-build-debug/_deps/eigen-src/test"
+	},
+	"sources" : [],
+	"type" : "UTILITY"
+}

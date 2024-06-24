@@ -1,0 +1,257 @@
+{
+	"backtrace" : 2,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_custom_target",
+			"ei_add_test",
+			"add_dependencies"
+		],
+		"files" : 
+		[
+			"cmake-build-debug/_deps/eigen-src/cmake/EigenTesting.cmake",
+			"cmake-build-debug/_deps/eigen-src/test/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 186,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 210,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 1
+			}
+		]
+	},
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 3,
+			"id" : "product_small_1::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "product_small_2::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 5,
+			"id" : "product_small_8::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 6,
+			"id" : "product_small_3::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 7,
+			"id" : "product_small_4::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 8,
+			"id" : "product_small_5::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 9,
+			"id" : "product_small_6::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 10,
+			"id" : "product_small_11::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 11,
+			"id" : "product_small_12::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 12,
+			"id" : "product_small_13::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 13,
+			"id" : "product_small_21::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 14,
+			"id" : "product_small_22::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 15,
+			"id" : "product_small_23::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 16,
+			"id" : "product_small_31::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 17,
+			"id" : "product_small_32::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 18,
+			"id" : "product_small_33::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 19,
+			"id" : "product_small_41::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 20,
+			"id" : "product_small_42::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 21,
+			"id" : "product_small_43::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 22,
+			"id" : "product_small_7::@75e1563cc3333299b915"
+		},
+		{
+			"backtrace" : 23,
+			"id" : "product_small_9::@75e1563cc3333299b915"
+		}
+	],
+	"id" : "product_small::@75e1563cc3333299b915",
+	"name" : "product_small",
+	"paths" : 
+	{
+		"build" : "_deps/eigen-build/test",
+		"source" : "cmake-build-debug/_deps/eigen-src/test"
+	},
+	"sources" : [],
+	"type" : "UTILITY"
+}

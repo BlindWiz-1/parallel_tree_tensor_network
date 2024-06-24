@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "_deps/eigen-build/doc/special_examples",
+		"source" : "cmake-build-debug/_deps/eigen-src/doc/special_examples"
+	}
+}

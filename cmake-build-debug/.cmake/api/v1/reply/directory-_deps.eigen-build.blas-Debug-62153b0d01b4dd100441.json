@@ -1,0 +1,63 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install"
+		],
+		"files" : 
+		[
+			"cmake-build-debug/_deps/eigen-src/blas/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 45,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 45,
+				"parent" : 0
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 1,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"_deps/eigen-build/blas/libeigen_blas_static.a"
+			],
+			"targetId" : "eigen_blas_static::@9ef3fab580bd1eb9db4d",
+			"targetIndex" : 615,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 2,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"_deps/eigen-build/blas/libeigen_blas.dylib"
+			],
+			"targetId" : "eigen_blas::@9ef3fab580bd1eb9db4d",
+			"targetIndex" : 614,
+			"type" : "target"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "_deps/eigen-build/blas",
+		"source" : "cmake-build-debug/_deps/eigen-src/blas"
+	}
+}
