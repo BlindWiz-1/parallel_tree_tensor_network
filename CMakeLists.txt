@@ -35,7 +35,12 @@ include_directories(${xtl_SOURCE_DIR}/include)
 include_directories(${xtensor_SOURCE_DIR}/include)
 
 # Add executable
-add_executable(parallel_tree_tensor_network src/main.cpp)
+add_executable(parallel_tree_tensor_network src/main.cpp
+        src/QuantumGate/QuantumGate.cpp
+        src/CircuitGate/CircuitGate.cpp
+        src/Circuit/Circuit.cpp
+        src/Circuit/Circuit.h
+        src/Circuit/Circuit.h)
 
 # Link libraries (Eigen, xtl, and xtensor are header-only, so no linking necessary)
 target_link_libraries(parallel_tree_tensor_network)

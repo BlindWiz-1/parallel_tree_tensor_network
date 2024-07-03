@@ -1,3 +1,21 @@
 # ninja log v6
-28	1197	1719253962721758434	CMakeFiles/parallel_tree_tensor_network.dir/src/main.cpp.o	71092dfa3b16235e
-1199	1365	1719253963892813189	parallel_tree_tensor_network	18fe0c439a00d253
+4739	4784	1719934607330286243	parallel_tree_tensor_network	545bc2c9aaa2ad8c
+44	4738	1719934602635548183	CMakeFiles/parallel_tree_tensor_network.dir/src/QuantumGate/QuantumGate.cpp.o	2ff7366c9ce74411
+52	4489	1719934571844932257	CMakeFiles/parallel_tree_tensor_network.dir/src/main.cpp.o	71092dfa3b16235e
+28	3706	1719939897945955660	build.ninja	1b96e2c3ca5aa48f
+26	45	1719939750980705588	CMakeFiles/parallel_tree_tensor_network.dir/src/Circuit/Circuit.cpp.o	ed50c576b3e5235a
+34	883	1719939942569295017	CMakeFiles/parallel_tree_tensor_network.dir/src/Circuit/Circuit.cpp.o	ed50c576b3e5235a
+34	914	1719939942569119896	CMakeFiles/parallel_tree_tensor_network.dir/src/CircuitGate/CircuitGate.cpp.o	e34121e86f30e487
+33	852	1719940060770699889	CMakeFiles/parallel_tree_tensor_network.dir/src/main.cpp.o	71092dfa3b16235e
+33	861	1719940060771209086	CMakeFiles/parallel_tree_tensor_network.dir/src/Circuit/Circuit.cpp.o	ed50c576b3e5235a
+861	1029	1719940061599088530	parallel_tree_tensor_network	26ab8f486618ec4a
+31	841	1719940100188228499	CMakeFiles/parallel_tree_tensor_network.dir/src/main.cpp.o	71092dfa3b16235e
+841	999	1719940100998309677	parallel_tree_tensor_network	26ab8f486618ec4a
+31	856	1719940200591571959	CMakeFiles/parallel_tree_tensor_network.dir/src/main.cpp.o	71092dfa3b16235e
+856	1018	1719940201417099455	parallel_tree_tensor_network	26ab8f486618ec4a
+28	682	1719940207365034660	CMakeFiles/parallel_tree_tensor_network.dir/src/main.cpp.o	71092dfa3b16235e
+682	725	1719940208018460114	parallel_tree_tensor_network	26ab8f486618ec4a
+31	838	1719940314128944946	CMakeFiles/parallel_tree_tensor_network.dir/src/main.cpp.o	71092dfa3b16235e
+838	1002	1719940314936021900	parallel_tree_tensor_network	26ab8f486618ec4a
+37	4210	1720003712662022276	CMakeFiles/parallel_tree_tensor_network.dir/src/QuantumGate/QuantumGate.cpp.o	2ff7366c9ce74411
+4210	4393	1720003716835484674	parallel_tree_tensor_network	26ab8f486618ec4a
