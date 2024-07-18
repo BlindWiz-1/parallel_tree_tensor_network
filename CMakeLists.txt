@@ -5,7 +5,6 @@ set(CMAKE_CXX_STANDARD 17)
 
 include(FetchContent)
 
-# Fetch Eigen
 FetchContent_Declare(
         Eigen
         GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
@@ -13,7 +12,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(Eigen)
 
-# Fetch xtl
 FetchContent_Declare(
         xtl
         GIT_REPOSITORY https://github.com/xtensor-stack/xtl.git
@@ -21,7 +19,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(xtl)
 
-# Fetch Xtensor
 FetchContent_Declare(
         xtensor
         GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
@@ -34,13 +31,17 @@ include_directories(${eigen_SOURCE_DIR})
 include_directories(${xtl_SOURCE_DIR}/include)
 include_directories(${xtensor_SOURCE_DIR}/include)
 
-# Add executable
 add_executable(parallel_tree_tensor_network src/main.cpp
-        src/QuantumGate/QuantumGate.cpp
-        src/CircuitGate/CircuitGate.cpp
-        src/Circuit/Circuit.cpp
-        src/Circuit/Circuit.h
-        src/Circuit/Circuit.h)
+        src/Circuits/QuantumGate/QuantumGate.cpp
+        src/Circuits/CircuitGate/CircuitGate.cpp
+        src/Circuits/Circuit/Circuit.cpp
+        src/PseudoTNode/PseudoTNode.cpp
+        src/TNode/TNode.cpp
+        src/TTN/TTN.cpp
+        src/Structure/SNode/SNode.cpp
+        src/Structure/QPair/QPair.cpp
+        src/Circuits/QuantumGate/SingleStateToTrees/SingleStateToTrees.cpp
+        src/Operations/TTNContract/TTNContract.cpp
+)
 
-# Link libraries (Eigen, xtl, and xtensor are header-only, so no linking necessary)
 target_link_libraries(parallel_tree_tensor_network)
