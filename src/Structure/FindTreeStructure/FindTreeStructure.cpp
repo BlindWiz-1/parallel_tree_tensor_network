@@ -5,6 +5,15 @@
 #include <iostream>
 #include <random>
 #include <unordered_map>
+#include <unordered_set>
+
+// Hash function for std::pair
+struct pair_hash {
+    template <class T1, class T2>
+    std::size_t operator()(const std::pair<T1, T2>& pair) const {
+        return std::hash<T1>()(pair.first) ^ std::hash<T2>()(pair.second);
+    }
+};
 
 std::shared_ptr<SNode> findTreeStructure(const Circuit& circuit, int clusters, int random_state, int d_max, bool flat) {
     if (circuit.getLSites() == 1) {
@@ -43,16 +52,13 @@ std::shared_ptr<SNode> findTreeStructure(const Circuit& circuit, int clusters, i
         }
     }
 
-    return std::make_shared<SNode>("root", nullptr, children### FindTreeStructure.cpp (continued)
-
-```cpp
-);
+    return std::make_shared<SNode>("root", nullptr, children);
 }
 
 Eigen::MatrixXd toSimilarityMatrix(const Circuit& circuit) {
     int n = circuit.getLSites();
     Eigen::MatrixXd similarity = Eigen::MatrixXd::Identity(n, n) * std::pow(2, 63);
-    std::unordered_map<std::pair<int, int>, int, boost::hash<std::pair<int, int>>> pairwise_gate_count;
+    std::unordered_map<std::pair<int, int>, int, pair_hash> pairwise_gate_count;
     std::unordered_map<int, int> total_gate_count;
 
     for (const auto& gate : circuit.getGates()) {

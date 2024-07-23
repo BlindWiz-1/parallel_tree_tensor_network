@@ -35,13 +35,16 @@ add_executable(parallel_tree_tensor_network src/main.cpp
         src/Circuits/QuantumGate/QuantumGate.cpp
         src/Circuits/CircuitGate/CircuitGate.cpp
         src/Circuits/Circuit/Circuit.cpp
-        src/PseudoTNode/PseudoTNode.cpp
-        src/TNode/TNode.cpp
-        src/TTN/TTN.cpp
+        src/Circuits/SingleStateToTrees/SingleStateToTrees.cpp
+        src/TTNCircuitSim/PseudoTNode/PseudoTNode.cpp
+        src/TTNCircuitSim/TNode/TNode.cpp
+        src/TTNCircuitSim/TTN/TTN.cpp
         src/Structure/SNode/SNode.cpp
         src/Structure/QPair/QPair.cpp
-        src/Circuits/QuantumGate/SingleStateToTrees/SingleStateToTrees.cpp
+        src/Structure/FindTreeStructure/FindTreeStructure.cpp
         src/Operations/TTNContract/TTNContract.cpp
+        src/Operations/TTNSampling/TTNSampling.cpp
+        src/Operations/Walker/Walker.cpp
 )
 
 target_link_libraries(parallel_tree_tensor_network)

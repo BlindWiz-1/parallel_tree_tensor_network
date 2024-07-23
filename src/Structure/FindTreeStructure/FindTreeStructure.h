@@ -1,7 +1,7 @@
 #ifndef FIND_TREE_STRUCTURE_H
 #define FIND_TREE_STRUCTURE_H
 
-#include "../Circuit/Circuit.h"
+#include "../../Circuits/Circuit/Circuit.h"
 #include "../SNode/SNode.h"
 #include <Eigen/Dense>
 #include <memory>

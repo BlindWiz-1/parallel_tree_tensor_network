@@ -1,4 +1,3 @@
-// Circuit.cpp
 #include "Circuit.h"
 #include <iostream>
 
@@ -17,4 +16,12 @@ void Circuit::display() const {
     for (const auto& gate : gates_) {
         gate.display();
     }
+}
+
+int Circuit::getLSites() const {
+    return l_sites_;
+}
+
+const std::vector<CircuitGate>& Circuit::getGates() const {
+    return gates_;
 }

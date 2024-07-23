@@ -1,4 +1,5 @@
 #include "TTNContract.h"
+#include "../../TTNCircuitSim/TNode/TNode.h"
 
 Tensor contract(const std::shared_ptr<TNode>& node, double nrm, bool enable_gpu) {
     if (node->isLeaf()) {
@@ -47,11 +48,8 @@ Tensor contract(const std::shared_ptr<TNode>& node, double nrm, bool enable_gpu)
 
     Tensor result;
     if (enable_gpu) {
-        // If GPU support is enabled, you can implement GPU-based contraction here.
-        // For now, let's use the CPU implementation.
-        result = Tensor::Constant(1, 1, nrm); // Placeholder for GPU implementation
+        result = Tensor::Constant(1, 1, nrm);
     } else {
-        // CPU contraction using Eigen's matrix multiplication
         result = params[0];
         for (size_t i = 1; i < params.size(); ++i) {
             result = result * params[i];

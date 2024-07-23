@@ -1,6 +1,5 @@
 // QuantumGate.cpp
 #include "QuantumGate.h"
-#include <iostream>
 
 const Eigen::Matrix2d QuantumGate::PauliX = (Eigen::Matrix2d() << 0, 1, 1, 0).finished();
 const Eigen::Matrix2cd QuantumGate::PauliY = (Eigen::Matrix2cd() << 0, std::complex<double>(0, -1), std::complex<double>(0, 1), 0).finished();
