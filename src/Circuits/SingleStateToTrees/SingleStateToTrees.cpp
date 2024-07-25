@@ -20,13 +20,13 @@ std::shared_ptr<TNode> createTreeLevel(const std::shared_ptr<SNode>& node, const
         return std::make_shared<TNode>(node->getName(), tensor);
     }
 
-    // one index per child + one for the parent node
-    int num_indices = node->getChildren().size() + 1;
+    // Initialize tensor with ones for intermediate nodes
     Tensor tensor = Tensor::Ones(1, 1);
+    int num_indices = node->getChildren().size() + 1;
+    std::vector<int> shape(num_indices, 1);  // Initialize shape with 1s
 
-    // Resize tensor to the new shape
-    tensor.resize(Eigen::Dynamic, Eigen::Dynamic);
-    tensor.resize(num_indices, 1);
+    tensor.resize(shape.size(), 1);
+    tensor.resize(num_indices, 1);  // Reshape tensor to correct dimensions
 
     std::vector<std::shared_ptr<TNode>> child_nodes;
     std::unordered_map<std::string, int> leaf_indices; // dict to map child indices to leaves

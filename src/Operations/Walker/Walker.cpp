@@ -33,7 +33,7 @@ std::vector<std::shared_ptr<TNode>> Walker::walk(const TNode* start, const TNode
     if (findPath(start)) {
         std::reverse(path.begin(), path.end());
     } else {
-        path.clear(); // Clear path if no path found
+        path.clear();
     }
     return path;
 }
@@ -66,7 +66,7 @@ std::vector<std::shared_ptr<PseudoTNode>> Walker::walk(const PseudoTNode* start,
     if (findPath(start)) {
         std::reverse(path.begin(), path.end());
     } else {
-        path.clear(); // Clear path if no path found
+        path.clear();
     }
     return path;
 }

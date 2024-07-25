@@ -15,5 +15,5 @@ bool QPair::operator<(const QPair& other) const {
     if (similarity_ == other.similarity_) {
         return qubits_ < other.qubits_;
     }
-    return similarity_ > other.similarity_; // Sorting in descending order by similarity
+    return similarity_ > other.similarity_;
 }

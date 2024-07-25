@@ -115,7 +115,6 @@ void TNode::precontractRoot(int site_j, const Tensor& factor) {
     int site_i = leaf_indices_.at(std::to_string(tmp_index_));
     site_j = leaf_indices_.at(std::to_string(site_j));
 
-    // Manually adjust the shape of the tensors for contraction
     Eigen::Index rows = tmp_factor_.value().rows();
     Eigen::Index cols = tmp_factor_.value().cols() / tmp_dim_;
     Tensor reshaped_tmp_factor(rows, tmp_dim_ * cols);

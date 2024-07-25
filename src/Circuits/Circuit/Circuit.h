@@ -11,8 +11,8 @@ public:
     void appendGate(const CircuitGate& gate);
     void display() const;
 
-    int getLSites() const;  // Add this method
-    const std::vector<CircuitGate>& getGates() const;  // Add this method
+    int getLSites() const;
+    const std::vector<CircuitGate>& getGates() const;
 
 private:
     int l_sites_;

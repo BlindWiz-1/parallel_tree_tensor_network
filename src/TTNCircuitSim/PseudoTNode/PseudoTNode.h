@@ -26,7 +26,6 @@ public:
     std::shared_ptr<PseudoTNode> getParent() const;
     std::vector<std::shared_ptr<PseudoTNode>> getChildren() const;
 
-    // Declare the methods for gate application and updating
     void applyGate(const Tensor& gate_matrix);
     void applyGateAndReshape(const Tensor& update);
     // void update(int gate_dim, int site_i, int site_j);

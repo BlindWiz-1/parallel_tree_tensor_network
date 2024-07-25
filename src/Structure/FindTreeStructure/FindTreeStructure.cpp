@@ -7,7 +7,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-// Hash function for std::pair
 struct pair_hash {
     template <class T1, class T2>
     std::size_t operator()(const std::pair<T1, T2>& pair) const {
@@ -61,7 +60,7 @@ Eigen::MatrixXd toSimilarityMatrix(const Circuit& circuit) {
     std::unordered_map<std::pair<int, int>, int, pair_hash> pairwise_gate_count;
     std::unordered_map<int, int> total_gate_count;
 
-    for (const auto& gate : circuit.getGates()) {
+    for (const CircuitGate& gate : circuit.getGates()) {
         if (gate.getSites().size() == 2) {
             int q1 = gate.getSites()[0];
             int q2 = gate.getSites()[1];
@@ -103,7 +102,7 @@ std::shared_ptr<SNode> createSubtree(const std::vector<int>& leaves, const Eigen
     auto current = std::make_shared<SNode>(std::to_string(cluster) + "." + std::to_string(counter));
 
     double sim = entries[0].getSimilarity();
-    for (const auto& entry : entries) {
+    for (const QPair& entry : entries) {
         int i = entry.getQubits().first;
         int j = entry.getQubits().second;
         std::vector<std::shared_ptr<SNode>> new_leaves;

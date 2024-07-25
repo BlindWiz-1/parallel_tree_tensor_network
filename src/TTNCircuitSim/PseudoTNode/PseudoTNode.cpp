@@ -58,12 +58,10 @@ std::vector<std::shared_ptr<PseudoTNode>> PseudoTNode::getChildren() const {
 
 void PseudoTNode::applyGate(const Tensor& gate_matrix) {
     assert(isLeaf());
-    // In PseudoTNode, we just update the shape without actual tensor operations
 }
 
 void PseudoTNode::applyGateAndReshape(const Tensor& update) {
     assert(isLeaf());
-    // In PseudoTNode, we just update the shape without actual tensor operations
     int gate_dim = update.cols();
     shape_ = {local_dim_, shape_[1] * gate_dim};
 }
