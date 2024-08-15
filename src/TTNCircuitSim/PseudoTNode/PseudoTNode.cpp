@@ -18,6 +18,18 @@ const std::vector<int>& PseudoTNode::getShape() const {
     return shape_;
 }
 
+void PseudoTNode::setShape(const std::vector<int>& new_shape) {
+    // Update the shape of the node
+    shape_ = new_shape;
+
+    // Update the local dimension based on the new shape
+    if (!shape_.empty()) {
+        local_dim_ = shape_[0]; // Assuming the first dimension is the local dimension
+    } else {
+        local_dim_ = 0; // Handle the case where shape might be empty
+    }
+}
+
 const std::string& PseudoTNode::getName() const {
     return name_;
 }

@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.23)
 project(parallel_tree_tensor_network)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 
 include(FetchContent)
 
@@ -26,10 +26,18 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(xtensor)
 
+FetchContent_Declare(
+        xtensor-blas
+        GIT_REPOSITORY https://github.com/xtensor-stack/xtensor-blas.git
+        GIT_TAG 0.21.0
+)
+FetchContent_MakeAvailable(xtensor-blas)
+
 # Include directories for Eigen, xtl, and xtensor
 include_directories(${eigen_SOURCE_DIR})
 include_directories(${xtl_SOURCE_DIR}/include)
 include_directories(${xtensor_SOURCE_DIR}/include)
+include_directories(${xtensor-blas_SOURCE_DIR}/include)
 
 add_executable(parallel_tree_tensor_network src/main.cpp
         src/Circuits/QuantumGate/QuantumGate.cpp
@@ -45,6 +53,8 @@ add_executable(parallel_tree_tensor_network src/main.cpp
         src/Operations/TTNContract/TTNContract.cpp
         src/Operations/TTNSampling/TTNSampling.cpp
         src/Operations/Walker/Walker.cpp
+        src/Operations/Orthonormalization/Orthonormalization.cpp
+        src/TTNCircuitSim/TreeStructure/TreeStructure.cpp
 )
 
 target_link_libraries(parallel_tree_tensor_network)

@@ -1,37 +1,37 @@
 #include <iostream>
 #include <vector>
-#include "Circuits/Circuit/Circuit.h"
-#include "Circuits/CircuitGate/CircuitGate.h"
-#include "Circuits/QuantumGate/QuantumGate.h"
+#include <optional>
+#include <Eigen/Dense>
+#include "TTNCircuitSim/TTN/TTN.h"
 #include "TTNCircuitSim/TNode/TNode.h"
+#include "Structure/SNode/SNode.h"
+#include "Circuits/Circuit/Circuit.h"
+#include "Circuits/QuantumGate/QuantumGate.h"
 #include "Circuits/SingleStateToTrees/SingleStateToTrees.h"
-#include "Structure/FindTreeStructure/FindTreeStructure.h"
 
 int main() {
-    int l_sites = 4;
-    int local_dimension = 2;
-    Circuit circuit(l_sites, local_dimension);
+    const int d = 2;
 
-    Eigen::Matrix2cd pauliX = QuantumGate::PauliX;
-    Eigen::Matrix2cd pauliY = QuantumGate::PauliY;
+    // Start from computational basis state
+    const std::vector<int> single_states = {0, 0, 0};
+    std::shared_ptr<TTN> psi = TTN::basisState(d, single_states, nullptr, Circuit(4, d), {{"d_max", 100}, {"enable_gpu", 1}, {"dry_run", 1}});
 
-    circuit.appendGate(CircuitGate(pauliX, {0}));
-    circuit.appendGate(CircuitGate(pauliY, {1}));
-    circuit.appendGate(CircuitGate(pauliX, {2}));
-    circuit.appendGate(CircuitGate(pauliY, {3}));
-    circuit.appendGate(CircuitGate(pauliX, {0, 1}));
-    circuit.appendGate(CircuitGate(pauliY, {2, 3}));
+    std::cout << "Number of qubits: " << psi->nSites() << std::endl;
 
-    std::cout << "Circuit:" << std::endl;
-    circuit.display();
+    // Define some standard gates
+    Eigen::Matrix2cd H = (Eigen::Matrix2cd() << 1.0 / std::sqrt(2), 1.0 / std::sqrt(2), 1.0 / std::sqrt(2), -1.0 / std::sqrt(2)).finished();
+    Eigen::Matrix4cd Ucnot = (Eigen::Matrix4cd() << 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0).finished();
 
-    auto treeStructure = findTreeStructure(circuit);
+    // Use circuit to prepare the Greenberger-Horne-Zeilinger (GHZ) state
+    Circuit circ(4, d);
+    circ.appendGate(CircuitGate(H, {0}));
+    circ.appendGate(CircuitGate(Ucnot, {0, 1}));
+    circ.appendGate(CircuitGate(Ucnot, {0, 2}));
 
-    std::vector<int> single_states = {0, 0, 0, 0};
-    auto root_node = singleStatesToTree(single_states, local_dimension, treeStructure);
+    psi->applyCircuit(circ.getGates());
 
-    std::cout << "\nTree Structure:" << std::endl;
-    root_node->display();
+    std::cout << "Output state as vector (should be the GHZ state):" << std::endl;
+    std::cout << psi->asVector().transpose() << std::endl;
 
     return 0;
 }

@@ -43,6 +43,30 @@ const std::vector<std::shared_ptr<TNode>>& TNode::getChildren() const { // Add t
     return children_;
 }
 
+int TNode::getTmpDim() const {
+    return tmp_dim_;
+}
+
+void TNode::setTmpDim(int tmp_dim) {
+    tmp_dim_ = tmp_dim;
+}
+
+int TNode::getTmpIndex() const {
+    return tmp_index_;
+}
+
+void TNode::setTmpIndex(int tmp_index) {
+    tmp_index_ = tmp_index;
+}
+
+std::optional<Tensor> TNode::getTmpFactor() const {
+    return tmp_factor_;
+}
+
+void TNode::setTmpFactor(const std::optional<Tensor>& tmp_factor) {
+    tmp_factor_ = tmp_factor;
+}
+
 void TNode::display(int depth) const {
     for (int i = 0; i < depth; ++i) {
         std::cout << "  ";
@@ -76,73 +100,6 @@ std::pair<double, int> TNode::countDimensions() const {
     }
 
     return {count, current_max};
-}
-
-
-Tensor TNode::orthonormalizeQR(int i, const std::optional<Tensor>& factor) {
-    Tensor tensor = tensor_;
-    std::string index_str = std::to_string(i);
-    if (factor.has_value()) {
-        tensor = contractFactorOnIndex(tensor, factor.value(), leaf_indices_[index_str]);
-    }
-    Eigen::Index rows = tensor.rows();
-    Eigen::Index cols = tensor.cols();
-    Eigen::MatrixXd real_tensor = tensor.real();  // QR is typically done on real matrices
-    Eigen::HouseholderQR<Eigen::MatrixXd> qr(real_tensor);
-    Eigen::MatrixXd q_matrix = qr.householderQ() * Eigen::MatrixXd::Identity(rows, cols);
-    Eigen::MatrixXd r_matrix = qr.matrixQR().triangularView<Eigen::Upper>();
-    tensor_ = q_matrix.cast<std::complex<double>>();
-    return r_matrix.cast<std::complex<double>>();
-}
-
-Tensor TNode::orthonormalizeSVD(int i, double tol, int d_max, const std::optional<Tensor>& factor) {
-    Tensor tensor = tensor_;
-    if (factor.has_value()) {
-        tensor = contractFactorOnIndex(tensor, factor.value(), leaf_indices_.at(std::to_string(i)));
-    }
-    Eigen::JacobiSVD<Tensor> svd(tensor, Eigen::ComputeThinU | Eigen::ComputeThinV);
-    Tensor u_matrix = svd.matrixU();
-    Tensor singular_values = svd.singularValues();
-    Tensor v_matrix = svd.matrixV();
-    int effective_d_max = std::min(d_max, static_cast<int>(singular_values.size()));
-    tensor_ = u_matrix.leftCols(effective_d_max);
-    return (singular_values.topRows(effective_d_max).asDiagonal() * v_matrix.leftCols(effective_d_max).adjoint());
-}
-
-void TNode::precontractRoot(int site_j, const Tensor& factor) {
-    assert(isRoot());
-    Tensor tensor = tensor_;
-    int site_i = leaf_indices_.at(std::to_string(tmp_index_));
-    site_j = leaf_indices_.at(std::to_string(site_j));
-
-    Eigen::Index rows = tmp_factor_.value().rows();
-    Eigen::Index cols = tmp_factor_.value().cols() / tmp_dim_;
-    Tensor reshaped_tmp_factor(rows, tmp_dim_ * cols);
-    reshaped_tmp_factor = tmp_factor_.value().reshaped(rows, tmp_dim_ * cols);
-
-    rows = factor.rows();
-    cols = factor.cols() / tmp_dim_;
-    Tensor reshaped_factor(rows, tmp_dim_ * cols);
-    reshaped_factor = factor.reshaped(rows, tmp_dim_ * cols);
-
-    tensor_ = contractFactorOnIndex(tensor, reshaped_tmp_factor, site_i);
-    tensor_ = contractFactorOnIndex(tensor_, reshaped_factor, site_j);
-
-    tmp_dim_ = 0;
-    tmp_factor_.reset();
-    tmp_index_ = -1;
-}
-
-Tensor TNode::contractFactorOnIndex(const Tensor& tensor, const Tensor& factor, int idx) const {
-    Eigen::Index rows = tensor.rows();
-    Eigen::Index cols = tensor.cols();
-    Tensor result = tensor;
-    for (Eigen::Index i = 0; i < rows; ++i) {
-        for (Eigen::Index j = 0; j < cols; ++j) {
-            result(i, j) *= factor(i % factor.rows(), j % factor.cols());
-        }
-    }
-    return result;
 }
 
 void TNode::applyGate(const Tensor& gate_matrix) {

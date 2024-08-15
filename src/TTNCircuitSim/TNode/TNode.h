@@ -27,16 +27,21 @@ public:
     std::shared_ptr<TNode> getParent() const;
 
     std::pair<double, int> countDimensions() const;
-    Tensor orthonormalizeQR(int i, const std::optional<Tensor>& factor = std::nullopt);
-    Tensor orthonormalizeSVD(int i, double tol, int d_max, const std::optional<Tensor>& factor = std::nullopt);
-    void precontractRoot(int site_j, const Tensor& factor);
 
     void applyGate(const Tensor& gate_matrix);
     void applyGateAndReshape(const Tensor& update);
-    // void update(int gate_dim, int site_i, int site_j);
 
     std::shared_ptr<TNode> getItem(int key);
     std::vector<std::shared_ptr<TNode>> getItem(int start, int stop);
+
+    int getTmpDim() const;
+    void setTmpDim(int tmp_dim);
+
+    int getTmpIndex() const;
+    void setTmpIndex(int tmp_index);
+
+    std::optional<Tensor> getTmpFactor() const;
+    void setTmpFactor(const std::optional<Tensor>& tmp_factor);
 
 private:
     Tensor contractFactorOnIndex(const Tensor& tensor, const Tensor& factor, int idx) const;

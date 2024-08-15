@@ -9,7 +9,7 @@ Tensor contract(const std::shared_ptr<TNode>& node, double nrm, bool enable_gpu)
 
     // Add current parent tensor and label children [0,...,ndim]
     int counter = node->getTensor().cols();
-    std::vector<Tensor> params = {node->getTensor()};
+    auto params = {node->getTensor()};
     std::vector<Eigen::Index> indices;
 
     for (int i = 0; i < node->getTensor().cols(); ++i) {

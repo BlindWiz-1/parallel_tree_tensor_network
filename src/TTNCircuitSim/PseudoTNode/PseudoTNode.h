@@ -17,6 +17,7 @@ public:
 
     void addChild(std::shared_ptr<PseudoTNode> child);
     const std::vector<int>& getShape() const;
+    void setShape(const std::vector<int>& new_shape);
     const std::string& getName() const;
     const std::unordered_map<std::string, int>& getLeafIndices() const;
     void setLeafIndices(const std::unordered_map<std::string, int>& leaf_indices);
