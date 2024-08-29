@@ -14,23 +14,16 @@ struct pair_hash {
     }
 };
 
-std::shared_ptr<SNode> findTreeStructure(const Circuit& circuit, int clusters, int random_state, int d_max, bool flat) {
+std::shared_ptr<SNode> findTreeStructure(const Circuit& circuit, int random_state, bool flat) {
     if (circuit.getLSites() == 1) {
         return std::make_shared<SNode>("0");
     }
 
-    if (clusters == -1) {
-        clusters = std::ceil(static_cast<double>(circuit.getLSites()) / 8);
-    }
-    if (d_max == -1) {
-        d_max = std::ceil(static_cast<double>(circuit.getLSites()) / clusters);
-    }
+    int clusters = std::ceil(static_cast<double>(circuit.getLSites()) / 8);
 
     Eigen::MatrixXd similarity = toSimilarityMatrix(circuit);
     std::vector<int> labels(circuit.getLSites(), 0);
 
-    // Perform clustering (using KMeans or any other clustering algorithm)
-    // Here, we use a simple example with random clustering
     std::default_random_engine generator(random_state);
     std::uniform_int_distribution<int> distribution(0, clusters - 1);
     for (int i = 0; i < circuit.getLSites(); ++i) {

@@ -1,13 +1,13 @@
 #include "CircuitGate.h"
 #include <iostream>
 
-CircuitGate::CircuitGate(const Matrix& gate_matrix, const std::vector<int>& sites)
+CircuitGate::CircuitGate(const Eigen::MatrixXcd& gate_matrix, const std::vector<int>& sites)
 : gate_matrix_(gate_matrix), sites_(sites), dim_(gate_matrix.rows()) {
     assert(!sites.empty());
     assert(gate_matrix.rows() == gate_matrix.cols());
 }
 
-const CircuitGate::Matrix& CircuitGate::getGateMatrix() const {
+const Eigen::MatrixXcd& CircuitGate::getGateMatrix() const {
     return gate_matrix_;
 }
 

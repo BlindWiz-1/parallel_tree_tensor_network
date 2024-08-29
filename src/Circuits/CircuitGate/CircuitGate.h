@@ -6,18 +6,16 @@
 
 class CircuitGate {
 public:
-    using Matrix = Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic>;
+    CircuitGate(const Eigen::MatrixXcd& gate_matrix, const std::vector<int>& sites);
 
-    CircuitGate(const Matrix& gate_matrix, const std::vector<int>& sites);
-
-    const Matrix& getGateMatrix() const;
+    const Eigen::MatrixXcd& getGateMatrix() const;
     const std::vector<int>& getSites() const;
     int getDimension() const;
 
     void display() const;
 
 private:
-    Matrix gate_matrix_;
+    Eigen::MatrixXcd gate_matrix_;
     std::vector<int> sites_;
     int dim_;
 };

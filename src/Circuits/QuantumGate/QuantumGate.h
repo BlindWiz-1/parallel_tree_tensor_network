@@ -7,14 +7,14 @@
 
 class QuantumGate {
 public:
-    static const Eigen::Matrix2d PauliX;
+    static const Eigen::Matrix2cd PauliX;
     static const Eigen::Matrix2cd PauliY;
-    static const Eigen::Matrix2d PauliZ;
-    static const Eigen::Matrix2d H;
+    static const Eigen::Matrix2cd PauliZ;
+    static const Eigen::Matrix2cd H;
 
     static const Eigen::Matrix4cd ISWAP;
     static const Eigen::Matrix4cd ROOT_ISWAP;
-    static const Eigen::Matrix4d CNOT;
+    static const Eigen::Matrix4cd CNOT;
 
     static const Eigen::Matrix2cd ROOT_X;
     static const Eigen::Matrix2cd ROOT_Y;

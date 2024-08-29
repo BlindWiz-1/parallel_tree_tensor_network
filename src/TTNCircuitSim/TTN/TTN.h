@@ -12,16 +12,19 @@
 class TTN {
 public:
     // Constructor
-    TTN(int local_dim, std::shared_ptr<TNode> root, int d_max = std::numeric_limits<int>::max(), bool enable_gpu = true, bool dry_run = false);
-    TTN(int local_dim, std::shared_ptr<PseudoTNode> root, int d_max = std::numeric_limits<int>::max(), bool enable_gpu = true, bool dry_run = false);
+    TTN(int local_dim, std::shared_ptr<TNode> root, int d_max = std::numeric_limits<int>::max());
 
     // Accessors
     int localDim() const;
     int nSites() const;
     Eigen::MatrixXd dtype() const;
 
+    std::shared_ptr<TNode> getTNodeRoot() const;
+    void setTNodeRoot(const std::shared_ptr<TNode>& root);
+
     // Static method to create a TTN representing a basis state
-    static std::shared_ptr<TTN> basisState(int local_dim, const std::vector<int>& single_states, const std::shared_ptr<SNode>& structure = nullptr, const std::optional<Circuit>& circ = std::nullopt, const std::unordered_map<std::string, int>& kwargs = {});
+    static std::shared_ptr<TTN> basisState(int local_dim, const std::vector<int>& single_states, const std::shared_ptr<SNode>& structure = nullptr, const std::optional<Circuit>& circ = std::nullopt, int d_max = std::numeric_limits<int>::max(), bool flat = false);
+;
 
     // Convert TTN to a single vector
     Eigen::VectorXd asVector() const;
@@ -35,9 +38,6 @@ public:
     // Orthonormalize the TTN
     void orthonormalize(int site_i, int site_j, bool compress = false, double tol = 0.0);
 
-    // Apply a circuit to the TTN
-    void applyCircuit(const std::vector<std::shared_ptr<TNode>>& circuit);
-
     // Display the TTN structure
     void display() const;
 
@@ -46,11 +46,9 @@ private:
     std::shared_ptr<TNode> root_;
     double nrm_;
     int d_max_;
-    bool enable_gpu_;
-    bool dry_run_;
 
     // Helper function to check if a matrix is a square identity matrix
-    bool isSquareIdentity(const Eigen::MatrixXd& factor) const;
+    bool isSquareIdentity(const Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic>& factor) const;
 };
 
 #endif // TTN_H

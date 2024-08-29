@@ -42,6 +42,7 @@ public:
 
     std::optional<Tensor> getTmpFactor() const;
     void setTmpFactor(const std::optional<Tensor>& tmp_factor);
+    void update(int gate_dim, int site_i, int site_j);
 
 private:
     Tensor contractFactorOnIndex(const Tensor& tensor, const Tensor& factor, int idx) const;

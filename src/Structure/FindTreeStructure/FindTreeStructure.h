@@ -7,7 +7,7 @@
 #include <memory>
 #include <vector>
 
-std::shared_ptr<SNode> findTreeStructure(const Circuit& circuit, int clusters = -1, int random_state = -1, int d_max = -1, bool flat = false);
+std::shared_ptr<SNode> findTreeStructure(const Circuit& circuit, int random_state = -1, bool flat = false);
 
 Eigen::MatrixXd toSimilarityMatrix(const Circuit& circuit);
 

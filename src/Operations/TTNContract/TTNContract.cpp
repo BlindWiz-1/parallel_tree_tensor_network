@@ -9,11 +9,11 @@ Tensor contract(const std::shared_ptr<TNode>& node, double nrm, bool enable_gpu)
 
     // Add current parent tensor and label children [0,...,ndim]
     int counter = node->getTensor().cols();
-    auto params = {node->getTensor()};
+    std::vector<Tensor> params = {node->getTensor()};
     std::vector<Eigen::Index> indices;
 
     for (int i = 0; i < node->getTensor().cols(); ++i) {
-        indices.push_back(i);
+        indices.emplace_back(i);
     }
 
     for (size_t idx = 0; idx < node->getChildren().size(); ++idx) {
@@ -23,25 +23,26 @@ Tensor contract(const std::shared_ptr<TNode>& node, double nrm, bool enable_gpu)
 
         // Place its already contracted leaves correctly
         std::vector<Eigen::Index> child_indices;
+        child_indices.reserve(child_tensor.cols() - 1);
         for (int i = 0; i < child_tensor.cols() - 1; ++i) {
-            child_indices.push_back(counter++);
+            child_indices.emplace_back(counter++);
         }
-        child_indices.push_back(idx);
+        child_indices.emplace_back(idx);
 
         // Append child tensor and its indices
         params.push_back(child_tensor);
         for (const auto& ci : child_indices) {
-            indices.push_back(ci);
+            indices.emplace_back(ci);
         }
     }
 
     if (!node->isRoot()) {
-        // Keep parent index
+        // Parent index
         indices.back() = counter;
     } else {
-        // Or add normalization factor
-        params.push_back(Tensor::Constant(1, 1, nrm));
-        indices.push_back(node->getTensor().cols() - 1);
+        // Normalization factor
+        params.emplace_back(Tensor::Constant(1, 1, nrm));
+        indices.emplace_back(node->getTensor().cols() - 1);
     }
 
     std::cout << "Contracting node " << node->getName() << std::endl;

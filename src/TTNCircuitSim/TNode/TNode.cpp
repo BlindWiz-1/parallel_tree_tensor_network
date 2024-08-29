@@ -39,7 +39,7 @@ bool TNode::isRoot() const {
     return parent_ == nullptr;
 }
 
-const std::vector<std::shared_ptr<TNode>>& TNode::getChildren() const { // Add this method
+const std::vector<std::shared_ptr<TNode>>& TNode::getChildren() const {
     return children_;
 }
 
@@ -142,4 +142,31 @@ std::vector<std::shared_ptr<TNode>> TNode::getItem(int start, int stop) {
         result.push_back(std::dynamic_pointer_cast<TNode>(node));
     }
     return result;
+}
+
+void TNode::update(int gate_dim, int site_i, int site_j) {
+    // Ensure this node is not a leaf
+    assert(!isLeaf());
+
+    // Determine the indices to update in the tensor dimensions
+    int index_i = leaf_indices_.count(std::to_string(site_i)) ? leaf_indices_.at(std::to_string(site_i)) : tensor_.cols() - 1;
+    int index_j = leaf_indices_.count(std::to_string(site_j)) ? leaf_indices_.at(std::to_string(site_j)) : tensor_.cols() - 1;
+
+    // Get the current shape of the tensor
+    Eigen::Index rows = tensor_.rows();
+    Eigen::Index cols = tensor_.cols();
+
+    // Create a new shape with the updated dimensions
+    Eigen::Index new_rows = rows;
+    Eigen::Index new_cols = cols;
+
+    if (index_i < index_j) {
+        new_rows *= gate_dim;
+    } else {
+        new_cols *= gate_dim;
+    }
+
+    Tensor new_tensor(new_rows, new_cols);
+    new_tensor.block(0, 0, rows, cols) = tensor_;
+    tensor_ = new_tensor;
 }

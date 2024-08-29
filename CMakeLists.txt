@@ -55,6 +55,7 @@ add_executable(parallel_tree_tensor_network src/main.cpp
         src/Operations/Walker/Walker.cpp
         src/Operations/Orthonormalization/Orthonormalization.cpp
         src/TTNCircuitSim/TreeStructure/TreeStructure.cpp
+        src/Operations/GateOperations/GateOperations.cpp
 )
 
 target_link_libraries(parallel_tree_tensor_network)
