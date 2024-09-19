@@ -12,8 +12,7 @@
 
 class Walker {
 public:
-    std::vector<std::shared_ptr<TNode>> walk(const TNode* start, const TNode* stop);
-    static std::vector<std::shared_ptr<PseudoTNode>> walk(const PseudoTNode* start, const PseudoTNode* stop);
+    std::vector<std::shared_ptr<TNode>> walk(const std::shared_ptr<TNode>& start, const std::shared_ptr<TNode>& stop);
 };
 
 #endif // WALKER_H

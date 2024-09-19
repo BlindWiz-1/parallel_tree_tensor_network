@@ -91,9 +91,9 @@ void GateOperations::applyCircuit(TTN& psi, const Circuit& circ) {
 
         assert(gate.getSites().size() == 1 || gate.getSites().size() == 2);
         if (gate.getSites().size() == 1) {
-            GateOperations::applySingleParticleGate(psi, gate.getGateMatrix(), gate.getSites()[0]);
+            applySingleParticleGate(psi, gate.getGateMatrix(), gate.getSites()[0]);
         } else {
-            GateOperations::applyTwoParticleGate(psi, gate.getGateMatrix(), gate.getSites()[0], gate.getSites()[1]);
+            applyTwoParticleGate(psi, gate.getGateMatrix(), gate.getSites()[0], gate.getSites()[1]);
             psi.orthonormalize(gate.getSites()[0], gate.getSites()[1]);
         }
 

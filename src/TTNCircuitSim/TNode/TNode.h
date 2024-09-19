@@ -32,7 +32,9 @@ public:
     void applyGateAndReshape(const Tensor& update);
 
     std::shared_ptr<TNode> getItem(int key);
-    std::vector<std::shared_ptr<TNode>> getItem(int start, int stop);
+    std::vector<std::shared_ptr<TNode>> getItem(int site_i, int site_j);
+
+    std::shared_ptr<TNode> findRoot();
 
     int getTmpDim() const;
     void setTmpDim(int tmp_dim);

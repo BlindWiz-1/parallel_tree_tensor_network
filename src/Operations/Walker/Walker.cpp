@@ -5,68 +5,26 @@
 #include <unordered_set>
 #include <algorithm>
 
-std::vector<std::shared_ptr<TNode>> Walker::walk(const TNode* start, const TNode* stop) {
-    std::unordered_set<const TNode*> visited;
+std::vector<std::shared_ptr<TNode>> Walker::walk(const std::shared_ptr<TNode>& start, const std::shared_ptr<TNode>& stop) {
     std::vector<std::shared_ptr<TNode>> path;
+    std::unordered_set<std::shared_ptr<TNode>> visited;
 
-    std::function<bool(const TNode*)> findPath = [&](const TNode* current) -> bool {
-        if (!current || visited.count(current)) {
-            return false;
-        }
+    std::function<void(const std::shared_ptr<TNode>&)> traverse = [&](const std::shared_ptr<TNode>& current) {
+        if (!current || visited.count(current)) return;
         visited.insert(current);
-        path.push_back(const_cast<TNode*>(current)->shared_from_this());
-        if (current == stop) {
-            return true;
-        }
+        path.push_back(current);
+
+        if (current == stop) return; // Stop the traversal if we reach the stop node
+
         for (const auto& child : current->getChildren()) {
-            if (findPath(child.get())) {
-                return true;
-            }
+            traverse(child);
         }
-        if (findPath(current->getParent().get())) {
-            return true;
+
+        if (current->getParent()) {
+            traverse(current->getParent());
         }
-        path.pop_back();
-        return false;
     };
 
-    if (findPath(start)) {
-        std::ranges::reverse(path.begin(), path.end());
-    } else {
-        path.clear();
-    }
-    return path;
-}
-
-std::vector<std::shared_ptr<PseudoTNode>> Walker::walk(const PseudoTNode* start, const PseudoTNode* stop) {
-    std::unordered_set<const PseudoTNode*> visited;
-    std::vector<std::shared_ptr<PseudoTNode>> path;
-
-    std::function<bool(const PseudoTNode*)> findPath = [&](const PseudoTNode* current) -> bool {
-        if (!current || visited.count(current)) {
-            return false;
-        }
-        visited.insert(current);
-        path.push_back(const_cast<PseudoTNode*>(current)->shared_from_this());
-        if (current == stop) {
-            return true;
-        }
-        for (const auto& child : current->getChildren()) {
-            if (findPath(child.get())) {
-                return true;
-            }
-        }
-        if (findPath(current->getParent().get())) {
-            return true;
-        }
-        path.pop_back();
-        return false;
-    };
-
-    if (findPath(start)) {
-        std::ranges::reverse(path.begin(), path.end());
-    } else {
-        path.clear();
-    }
+    traverse(start);
     return path;
 }

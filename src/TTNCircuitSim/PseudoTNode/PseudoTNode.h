@@ -31,9 +31,6 @@ public:
     void applyGateAndReshape(const Tensor& update);
     // void update(int gate_dim, int site_i, int site_j);
 
-    std::shared_ptr<PseudoTNode> getItem(int key);
-    std::vector<std::shared_ptr<PseudoTNode>> getItem(int start, int stop);
-
 private:
     std::string name_;
     std::vector<int> shape_;

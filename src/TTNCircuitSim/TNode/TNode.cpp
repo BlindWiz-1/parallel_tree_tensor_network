@@ -67,11 +67,20 @@ void TNode::setTmpFactor(const std::optional<Tensor>& tmp_factor) {
     tmp_factor_ = tmp_factor;
 }
 
-void TNode::display(int depth) const {
-    for (int i = 0; i < depth; ++i) {
-        std::cout << "  ";
+std::shared_ptr<TNode> TNode::findRoot() {
+    std::shared_ptr<TNode> current = shared_from_this();  // Start with the current node
+    while (current->getParent() != nullptr) {  // Continue until there is no parent
+        current = current->getParent();  // Move to the parent node
     }
-    std::cout << name_ << std::endl;
+    return current;  // Return the root node
+}
+
+void TNode::display(int depth) const {
+    std::string indent = std::string(depth * 2, ' ');
+    std::cout << indent << "|-- " << name_
+                  << " (Dim: " << tensor_.rows() << "x" << tensor_.cols() << ", Children: " << children_.size() << ")"
+                  << std::endl;
+
     for (const auto& child : children_) {
         child->display(depth + 1);
     }
@@ -114,34 +123,39 @@ void TNode::applyGateAndReshape(const Tensor& update) {
 }
 
 std::shared_ptr<TNode> TNode::getItem(int key) {
-    for (const auto& leaf : leaf_indices_) {
-        if (std::stoi(leaf.first) == key) {
-            return shared_from_this();
+    Walker walker;
+    auto root = this->findRoot();  // Method to find the root of the tree.
+
+    auto path = walker.walk(root, nullptr);
+
+    for (const auto& node : path) {
+        if (node->getLeafIndices().find(std::to_string(key)) != node->getLeafIndices().end()) {
+            return node;  // Return the node that matches the key.
         }
     }
-    for (const auto& child : children_) {
-        auto result = child->getItem(key);
-        if (result != nullptr) {
-            return result;
-        }
-    }
-    return nullptr;
+
+    return nullptr;  // Return nullptr if no node with the key is found.
 }
 
-std::vector<std::shared_ptr<TNode>> TNode::getItem(int start, int stop) {
-    std::vector<std::shared_ptr<TNode>> result;
-    auto start_node = getItem(start);
-    auto stop_node = getItem(stop);
-    if (start_node == nullptr || stop_node == nullptr) {
-        return result;
+std::vector<std::shared_ptr<TNode>> TNode::getItem(int site_i, int site_j) {
+    Walker walker;
+
+    // Find the root node from the current node
+    auto root = this->findRoot();
+
+    // Use the simple getItem to find the starting and stopping nodes
+    std::shared_ptr<TNode> node_i = root->getItem(site_i);
+    std::shared_ptr<TNode> node_j = root->getItem(site_j);
+
+    // If either of the nodes is null, return an empty result
+    if (!node_i || !node_j) {
+        return {};
     }
 
-    Walker walker;
-    auto path = walker.walk(start_node.get(), stop_node.get());
-    for (const auto& node : path) {
-        result.push_back(std::dynamic_pointer_cast<TNode>(node));
-    }
-    return result;
+    // Use the walker to find the path between node_i and node_j
+    auto path = walker.walk(node_i, node_j);
+
+    return path;
 }
 
 void TNode::update(int gate_dim, int site_i, int site_j) {

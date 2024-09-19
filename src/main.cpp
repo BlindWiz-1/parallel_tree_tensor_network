@@ -22,7 +22,7 @@ int main() {
     circ.appendGate(CircuitGate(QuantumGate::CNOT, {0, 1}));
     circ.appendGate(CircuitGate(QuantumGate::CNOT, {0, 2}));
 
-    std::shared_ptr<TTN> psi = TTN::basisState(d, single_states, nullptr, circ, 100, true);
+    std::shared_ptr<TTN> psi = TTN::basisState(2, single_states, nullptr, circ, 100, true);
     GateOperations::applyCircuit(*psi, circ);
 
     std::cout << "Number of qubits: " << psi->nSites() << std::endl;

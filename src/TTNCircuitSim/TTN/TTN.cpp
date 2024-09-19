@@ -7,14 +7,10 @@
 #include "../../Operations/TTNContract/TTNContract.h"
 #include "../../Operations/Orthonormalization/Orthonormalization.h"
 #include "../TreeStructure/TreeStructure.h"
-#include <iostream>
 #include <utility>
 #include <vector>
-#include <memory>
 #include <algorithm>
 #include <Eigen/Dense>
-
-#include "../../Operations/GateOperations/GateOperations.h"
 
 TTN::TTN(int local_dim, std::shared_ptr<TNode> root, int d_max)
     : local_dimension_(local_dim), root_(std::move(root)), nrm_(1.0), d_max_(d_max) {}
@@ -57,9 +53,10 @@ std::shared_ptr<TTN> TTN::basisState(int local_dim,
 
     assert(structure != nullptr || circ.has_value());
 
-    std::shared_ptr<SNode> final_structure = structure;
     auto root = singleStatesToTree(single_states, local_dim, findTreeStructure(*circ, single_states.size(), flat));
-    return std::make_shared<TTN>(local_dim, root, d_max);
+    auto ttn = std::make_shared<TTN>(local_dim, root, d_max);
+    ttn->display();
+    return ttn;
 }
 
 Eigen::VectorXd TTN::asVector() const {

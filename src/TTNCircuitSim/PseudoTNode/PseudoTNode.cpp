@@ -77,32 +77,3 @@ void PseudoTNode::applyGateAndReshape(const Tensor& update) {
     int gate_dim = update.cols();
     shape_ = {local_dim_, shape_[1] * gate_dim};
 }
-
-std::shared_ptr<PseudoTNode> PseudoTNode::getItem(int key) {
-    if (std::stoi(name_) == key) {
-        return shared_from_this();
-    }
-    for (const auto& child : children_) {
-        auto result = child->getItem(key);
-        if (result != nullptr) {
-            return result;
-        }
-    }
-    return nullptr;
-}
-
-std::vector<std::shared_ptr<PseudoTNode>> PseudoTNode::getItem(int start, int stop) {
-    std::vector<std::shared_ptr<PseudoTNode>> result;
-    auto start_node = getItem(start);
-    auto stop_node = getItem(stop);
-    if (start_node == nullptr || stop_node == nullptr) {
-        return result;
-    }
-
-    Walker walker;
-    auto path = walker.walk(start_node.get(), stop_node.get());
-    for (const auto& node : path) {
-        result.push_back(std::dynamic_pointer_cast<PseudoTNode>(node));
-    }
-    return result;
-}
