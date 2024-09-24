@@ -2,6 +2,7 @@
 #include <cassert>
 #include <iostream>
 #include "../../TTNCircuitSim/TTN/TTN.h"
+#include <chrono>
 
 void GateOperations::applySingleParticleGate(TTN& psi, const Eigen::MatrixXcd& gate_matrix, int site) {
     assert(0 <= site && site < psi.nSites());

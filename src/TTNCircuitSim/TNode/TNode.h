@@ -1,12 +1,11 @@
 #ifndef TNODE_H
 #define TNODE_H
 
+#include <memory>
 #include <Eigen/Dense>
 #include <vector>
 #include <unordered_map>
-#include <memory>
 #include <string>
-#include <iostream>
 
 using Tensor = Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic>;
 

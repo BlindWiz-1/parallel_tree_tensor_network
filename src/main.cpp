@@ -1,16 +1,15 @@
 #include <iostream>
 #include <vector>
 #include <optional>
-#include <Eigen/Dense>
 #include "TTNCircuitSim/TTN/TTN.h"
-#include "TTNCircuitSim/TNode/TNode.h"
-#include "Structure/SNode/SNode.h"
 #include "Circuits/Circuit/Circuit.h"
 #include "Circuits/QuantumGate/QuantumGate.h"
 #include "Circuits/SingleStateToTrees/SingleStateToTrees.h"
 #include "Operations/GateOperations/GateOperations.h"
+#include <Eigen/Core>
 
 int main() {
+    Eigen::initParallel();
     const int d = 2;
 
     // Start from computational basis state

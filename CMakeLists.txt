@@ -33,27 +33,21 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(xtensor-blas)
 
-FetchContent_Declare(
-        googletest
-        GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG release-1.11.0
-)
-FetchContent_MakeAvailable(googletest)
+# Adding OpenMP settings manually for GCC on macOS
+set(OpenMP_CXX_FLAGS "-fopenmp -I/opt/homebrew/opt/libomp/include")
+set(OpenMP_CXX_LIB_NAMES "omp")
+set(OpenMP_omp_LIBRARY "/opt/homebrew/opt/libomp/lib/libomp.dylib")
 
-#find_package(OpenMP REQUIRED)
-#if(OPENMP_FOUND)
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-#    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-#endif()
-
-# Include directories for Eigen, xtl, and xtensor
+# Include directories for Eigen, xtl, xtensor, and gtest
 include_directories(${eigen_SOURCE_DIR})
 include_directories(${xtl_SOURCE_DIR}/include)
 include_directories(${xtensor_SOURCE_DIR}/include)
 include_directories(${xtensor-blas_SOURCE_DIR}/include)
 include_directories(${googletest_SOURCE_DIR})
 
-add_executable(parallel_tree_tensor_network src/main.cpp
+# Add executable and source files
+add_executable(parallel_tree_tensor_network
+        src/main.cpp
         src/Circuits/QuantumGate/QuantumGate.cpp
         src/Circuits/CircuitGate/CircuitGate.cpp
         src/Circuits/Circuit/Circuit.cpp
@@ -70,7 +64,9 @@ add_executable(parallel_tree_tensor_network src/main.cpp
         src/Operations/Orthonormalization/Orthonormalization.cpp
         src/TTNCircuitSim/TreeStructure/TreeStructure.cpp
         src/Operations/GateOperations/GateOperations.cpp
-        src/TTNCircuitSim/TestTTN/TestTTN.cpp
 )
 
-target_link_libraries(parallel_tree_tensor_network gtest gtest_main)
+find_package(OpenMP REQUIRED)
+if (OPENMP_FOUND)
+    target_link_libraries(parallel_tree_tensor_network PUBLIC OpenMP::OpenMP_CXX)
+endif()

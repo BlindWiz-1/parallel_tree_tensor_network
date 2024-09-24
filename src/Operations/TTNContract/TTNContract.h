@@ -1,6 +1,7 @@
 #ifndef TTNCONTRACT_H
 #define TTNCONTRACT_H
 
+#include <memory>
 #include "../../TTNCircuitSim/TNode/TNode.h"
 #include <Eigen/Dense>
 #include <iostream>

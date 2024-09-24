@@ -1,6 +1,7 @@
 #ifndef TTNSAMPLING_H
 #define TTNSAMPLING_H
 
+#include <memory>
 #include "../../TTNCircuitSim/TNode/TNode.h"
 #include <Eigen/Dense>
 #include <vector>
