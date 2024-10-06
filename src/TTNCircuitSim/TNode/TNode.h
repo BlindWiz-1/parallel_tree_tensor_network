@@ -28,7 +28,7 @@ public:
     std::pair<double, int> countDimensions() const;
 
     void applyGate(const Tensor& gate_matrix);
-    void applyGateAndReshape(const Tensor& update);
+    void applyGateAndReshape(const std::vector<Eigen::MatrixXcd>& update);
 
     std::shared_ptr<TNode> getItem(int key);
     std::vector<std::shared_ptr<TNode>> getItem(int site_i, int site_j);

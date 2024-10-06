@@ -22,7 +22,4 @@ Tensor contractFactorOnIndex(const Tensor& tensor, const Tensor& factor, int idx
 // Function to precontract the root node
 void precontractRoot(TNode& node, int site_j, const Tensor& factor);
 
-// Function for pseudo-orthonormalization
-int pseudoOrthonormalize(PseudoTNode& node, int i, std::optional<int> factor = std::nullopt);
-
 #endif // ORTHONORMALIZATION_H

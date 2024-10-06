@@ -11,6 +11,7 @@
 #include <vector>
 #include <algorithm>
 #include <Eigen/Dense>
+#include <unsupported/Eigen/CXX11/Tensor>
 
 TTN::TTN(int local_dim, std::shared_ptr<TNode> root, int d_max)
     : local_dimension_(local_dim), root_(std::move(root)), nrm_(1.0), d_max_(d_max) {}
@@ -60,15 +61,40 @@ std::shared_ptr<TTN> TTN::basisState(int local_dim,
 }
 
 Eigen::VectorXd TTN::asVector() const {
+    // Contract the tree tensor network and get the resulting state
     Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic> state = contract(root_, nrm_);
+
+    // Extract and sort the axes
     auto axes = root_->getLeafIndices();
     std::vector<int> axes_values;
     for (const auto& kv : axes) {
         axes_values.push_back(kv.second);
     }
     std::sort(axes_values.begin(), axes_values.end());
-    // Reshape and reorder the state vector according to the axes
-    return state.real();
+
+    // Convert Eigen::Matrix to Eigen::Tensor
+    Eigen::Tensor<std::complex<double>, 2> tensor_state(state.rows(), state.cols());
+    for (Eigen::Index i = 0; i < state.rows(); ++i) {
+        for (Eigen::Index j = 0; j < state.cols(); ++j) {
+            tensor_state(i, j) = state(i, j);
+        }
+    }
+
+    // Reshape tensor into the desired shape: (local_dim, flattened_dimension)
+    Eigen::array<Eigen::Index, 2> shape = {local_dimension_, static_cast<int>(axes_values.size())};
+    Eigen::Tensor<std::complex<double>, 2> reshaped_tensor = tensor_state.reshape(shape);
+
+    // Apply permutation if needed (you may need to adjust the permutation indices)
+    Eigen::array<int, 2> permute_indices = {0, 1};  // This should be adjusted to match your specific reordering logic
+    Eigen::Tensor<std::complex<double>, 2> permuted_tensor = reshaped_tensor.shuffle(permute_indices).eval(); // Use eval() to create a concrete tensor
+
+    // Convert Eigen::Tensor back to Eigen::VectorXd for output
+    Eigen::VectorXd final_vector(permuted_tensor.size());
+    for (Eigen::Index i = 0; i < permuted_tensor.size(); ++i) {
+        final_vector(i) = permuted_tensor(i).real();
+    }
+
+    return final_vector;
 }
 
 std::pair<float, int> TTN::bondData() const {
@@ -87,7 +113,7 @@ int TTN::maxLeaves() const {
     return countMaxLeaves(root_);
 }
 
-void TTN::orthonormalize(int site_i, int site_j, bool compress, double tol) {
+void TTN::orthonormalize(int site_i, int site_j) {
     Eigen::Matrix<std::complex<double>, -1, -1> factor;
     std::optional<Eigen::Matrix<std::complex<double>, -1, -1>> tmp_factor;
 
@@ -111,7 +137,7 @@ void TTN::orthonormalize(int site_i, int site_j, bool compress, double tol) {
     for (auto node = root_->getItem(site_j); node != nullptr; node = node->getParent()) {
         if (node->isRoot() && node->getTmpFactor()->rows() == 0 && node->getTmpFactor()->cols() == 0) {
             precontractRoot(*node, site_j, factor);
-            factor = Eigen::MatrixXd();
+            factor = Eigen::MatrixXcd();
         }
 
         factor = orthonormalizeSVD(node->getTensor(), site_i, d_max_, node->getTmpFactor(), node->getLeafIndices());

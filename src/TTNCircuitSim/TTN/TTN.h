@@ -36,7 +36,7 @@ public:
     int maxLeaves() const;
 
     // Orthonormalize the TTN
-    void orthonormalize(int site_i, int site_j, bool compress = false, double tol = 0.0);
+    void orthonormalize(int site_i, int site_j);
 
     // Display the TTN structure
     void display() const;
