@@ -54,7 +54,13 @@ std::shared_ptr<TTN> TTN::basisState(int local_dim,
 
     assert(structure != nullptr || circ.has_value());
 
-    auto root = singleStatesToTree(single_states, local_dim, findTreeStructure(*circ, single_states.size(), flat));
+    // If no structure is provided, build it based on the circuit
+    auto actual_structure = structure;
+    if (!structure) {
+        actual_structure = findTreeStructure(*circ, single_states.size(), flat);
+    }
+
+    auto root = singleStatesToTree(single_states, local_dim, actual_structure);
     auto ttn = std::make_shared<TTN>(local_dim, root, d_max);
     ttn->display();
     return ttn;
@@ -117,36 +123,42 @@ void TTN::orthonormalize(int site_i, int site_j) {
     Eigen::Matrix<std::complex<double>, -1, -1> factor;
     std::optional<Eigen::Matrix<std::complex<double>, -1, -1>> tmp_factor;
 
-    // Process site_i
+    std::cout << "Starting orthonormalization from site " << site_i << " to site " << site_j << std::endl;
+
+    // Process site_i upwards
     for (auto node = root_->getItem(site_i); node != nullptr; node = node->getParent()) {
+        std::cout << "Node dimensions before normalization: (" << node->getTensor().rows() << "x" << node->getTensor().cols() << ")" << std::endl;
         if (node->getLeafIndices().count(std::to_string(site_j))) {
-             if (node->isRoot()) {
+            if (node->isRoot()) {
                 node->setTmpFactor(factor);
             } else {
                 contractFactorOnIndex(node->getTensor(), factor, site_i);
             }
             break;
         }
-
         factor = orthonormalizeSVD(node->getTensor(), site_i, d_max_, node->getTmpFactor(), node->getLeafIndices());
+        std::cout << "Factor dimensions after normalization: (" << factor.rows() << "x" << factor.cols() << ")" << std::endl;
         if (isSquareIdentity(factor)) break;
     }
 
-    // Process site_j
-    factor = Eigen::Matrix<std::complex<double>, -1, -1>();
+    // Process site_j upwards
+    factor = Eigen::Matrix<std::complex<double>, -1, -1>();  // Reset factor
     for (auto node = root_->getItem(site_j); node != nullptr; node = node->getParent()) {
+        std::cout << "Processing node at site " << site_j << "..." << std::endl;
         if (node->isRoot() && node->getTmpFactor()->rows() == 0 && node->getTmpFactor()->cols() == 0) {
+            std::cout << "Precontracting root..." << std::endl;
             precontractRoot(*node, site_j, factor);
-            factor = Eigen::MatrixXcd();
+            factor = Eigen::MatrixXcd();  // Reset factor again
         }
 
-        factor = orthonormalizeSVD(node->getTensor(), site_i, d_max_, node->getTmpFactor(), node->getLeafIndices());
+        factor = orthonormalizeSVD(node->getTensor(), site_j, d_max_, node->getTmpFactor(), node->getLeafIndices());
         if (isSquareIdentity(factor)) break;
     }
 
-    // Update normalization factor
+    // Update normalization factor if necessary
     if (factor.size() > 0) {
         nrm_ *= factor(0, 0).real();
+        std::cout << "Updated normalization factor: " << nrm_ << std::endl;
     }
 }
 

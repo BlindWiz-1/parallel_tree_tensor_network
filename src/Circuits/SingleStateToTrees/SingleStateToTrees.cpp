@@ -13,30 +13,28 @@ std::shared_ptr<PseudoTNode> createPseudoTree(const std::shared_ptr<SNode>& node
 }
 
 std::shared_ptr<TNode> createTreeLevel(const std::shared_ptr<SNode>& node, const std::vector<int>& single_states, int local_dimension) {
-    if (node->isLeaf()) { // adds base state for leaf nodes
+    if (node->isLeaf()) { // Initialize leaf node with the single state value
         Tensor tensor(local_dimension, 1);
         tensor.setZero();
         tensor(single_states[std::stoi(node->getName())], 0) = 1;
         return std::make_shared<TNode>(node->getName(), tensor);
     }
 
-    // Initialize tensor with ones for intermediate nodes
     Tensor tensor = Tensor::Ones(1, 1);
     int num_indices = node->getChildren().size() + 1;
-    std::vector<int> shape(num_indices, 1);  // Initialize shape with 1s
-
+    std::vector<int> shape(num_indices, 1);
     tensor.resize(shape.size(), 1);
-    tensor.resize(num_indices, 1);  // Reshape tensor to correct dimensions
 
     std::vector<std::shared_ptr<TNode>> child_nodes;
-    std::unordered_map<std::string, int> leaf_indices; // dict to map child indices to leaves
+    std::unordered_map<std::string, int> leaf_indices;
 
     for (size_t idx = 0; idx < node->getChildren().size(); ++idx) {
         auto child = node->getChildren()[idx];
         auto new_child = createTreeLevel(child, single_states, local_dimension);
+
         if (new_child->isLeaf()) {
             leaf_indices[new_child->getName()] = idx;
-        } else { // add all entries of the child to own dict and set the index
+        } else {
             for (const auto& [k, _] : new_child->getLeafIndices()) {
                 leaf_indices[k] = idx;
             }

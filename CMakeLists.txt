@@ -44,6 +44,7 @@ include_directories(${xtl_SOURCE_DIR}/include)
 include_directories(${xtensor_SOURCE_DIR}/include)
 include_directories(${xtensor-blas_SOURCE_DIR}/include)
 include_directories(${googletest_SOURCE_DIR})
+include_directories(${googletest_SOURCE_DIR})
 
 # Add executable and source files
 add_executable(parallel_tree_tensor_network

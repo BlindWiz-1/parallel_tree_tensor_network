@@ -118,27 +118,22 @@ void TNode::applyGate(const Tensor& gate_matrix) {
     tensor_ = gate_matrix * tensor_;
 }
 
-void TNode::applyGateAndReshape(const std::vector<Eigen::MatrixXcd>& update) {
-    // Log the initial tensor dimensions
-    std::cout << "Applying Gate and Reshape" << std::endl;
-    std::cout << "Tensor dimensions (rows x cols): (" << tensor_.rows() << "x" << tensor_.cols() << ")" << std::endl;
+// Helper function: Converts Eigen::MatrixXcd to Eigen::Tensor
+Eigen::Tensor<std::complex<double>, 2> matrixToTensor(const Eigen::MatrixXcd& matrix) {
+    return Eigen::TensorMap<Eigen::Tensor<std::complex<double>, 2>>(const_cast<std::complex<double>*>(matrix.data()), matrix.rows(), matrix.cols());
+}
 
-    // Verify that the update vector is not empty
-    assert(!update.empty() && "Update tensor should not be empty!");
+// Helper function: Converts Eigen::Tensor to Eigen::MatrixXcd
+Eigen::MatrixXcd tensorToMatrix(const Eigen::Tensor<std::complex<double>, 2>& tensor) {
+    return Eigen::Map<const Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic>>(tensor.data(), tensor.dimension(0), tensor.dimension(1));
+}
 
+// Helper function: Converts a 3D update matrix vector to an Eigen::Tensor
+Eigen::Tensor<std::complex<double>, 3> convertUpdateToTensor(const std::vector<Eigen::MatrixXcd>& update) {
     int physical_dim = update[0].rows();
-    int parent_dim = tensor_.cols();
-    int gate_dim = update.size(); // Number of update matrices in the vector
-
-    // Print the dimensions of the update matrices for verification
-    std::cout << "Physical dimension: " << physical_dim << std::endl;
-    std::cout << "Parent dimension: " << parent_dim << std::endl;
-    std::cout << "Gate dimension: " << gate_dim << std::endl;
-
-    // Only convert to Eigen::Tensor for contraction
+    int parent_dim = update[0].cols();
+    int gate_dim = update.size();
     Eigen::Tensor<std::complex<double>, 3> update_tensor(physical_dim, parent_dim, gate_dim);
-
-    // Populate the update_tensor from the provided vector of matrices
     for (int g = 0; g < gate_dim; ++g) {
         for (int p = 0; p < physical_dim; ++p) {
             for (int k = 0; k < parent_dim; ++k) {
@@ -146,19 +141,37 @@ void TNode::applyGateAndReshape(const std::vector<Eigen::MatrixXcd>& update) {
             }
         }
     }
+    return update_tensor;
+}
 
-    // Create Eigen::Tensor version of the existing tensor_ (which is still Eigen::MatrixXcd)
-    Eigen::Tensor<std::complex<double>, 2> tensor_eigen(parent_dim, tensor_.cols());
-    for (int i = 0; i < parent_dim; ++i) {
-        for (int j = 0; j < tensor_.cols(); ++j) {
-            tensor_eigen(i, j) = tensor_(i, j);
-        }
-    }
+// Function to apply the gate and reshape tensor
+void TNode::applyGateAndReshape(const std::vector<Eigen::MatrixXcd>& update) {
+    // Log initial tensor dimensions
+    std::cout << "Applying Gate and Reshape" << std::endl;
+    std::cout << "Tensor dimensions (rows x cols): (" << tensor_.rows() << "x" << tensor_.cols() << ")" << std::endl;
+
+    // Check that the update is not empty
+    assert(!update.empty() && "Update tensor should not be empty!");
+
+    int physical_dim = update[0].rows();
+    int parent_dim = tensor_.cols();
+    int gate_dim = update.size(); // Number of update matrices in the vector
+
+    // Print update matrix dimensions for verification
+    std::cout << "Physical dimension: " << physical_dim << std::endl;
+    std::cout << "Parent dimension: " << parent_dim << std::endl;
+    std::cout << "Gate dimension: " << gate_dim << std::endl;
+
+    // Convert update matrices to a single Eigen::Tensor
+    Eigen::Tensor<std::complex<double>, 3> update_tensor = convertUpdateToTensor(update);
+
+    // Convert original tensor (Eigen::MatrixXcd) to Eigen::Tensor
+    Eigen::Tensor<std::complex<double>, 2> tensor_eigen = matrixToTensor(tensor_);
 
     // Print tensor_eigen dimensions for verification
     std::cout << "Tensor to contract dimensions (rows x cols): (" << tensor_eigen.dimension(0) << "x" << tensor_eigen.dimension(1) << ")" << std::endl;
 
-    // Perform the contraction
+    // Perform the contraction operation: `np.einsum("abc, bd -> acd", update, self.tensor)`
     Eigen::array<Eigen::IndexPair<int>, 1> contraction_dims = {Eigen::IndexPair<int>(1, 0)};
     Eigen::Tensor<std::complex<double>, 3> result_tensor = update_tensor.contract(tensor_eigen, contraction_dims);
 
@@ -168,24 +181,10 @@ void TNode::applyGateAndReshape(const std::vector<Eigen::MatrixXcd>& update) {
               << result_tensor.dimension(1) << "x"
               << result_tensor.dimension(2) << ")" << std::endl;
 
-    // Reshape the resulting tensor back to 2D as required: (physical, parent * gate_dim)
     Eigen::Tensor<std::complex<double>, 2> reshaped_tensor = result_tensor.reshape(Eigen::array<Eigen::Index, 2>{physical_dim, parent_dim * gate_dim});
-
-    // Print reshaped tensor dimensions for verification
     std::cout << "Reshaped tensor dimensions: (" << reshaped_tensor.dimension(0) << "x" << reshaped_tensor.dimension(1) << ")" << std::endl;
-
-    // Convert the reshaped tensor back to Eigen::MatrixXcd for tensor_
-    tensor_.resize(physical_dim, parent_dim * gate_dim);
-    for (int i = 0; i < reshaped_tensor.dimension(0); ++i) {
-        for (int j = 0; j < reshaped_tensor.dimension(1); ++j) {
-            tensor_(i, j) = reshaped_tensor(i, j);
-        }
-    }
-
-    // Reshape tensor_ to conform to local_dim_
+    tensor_ = tensorToMatrix(reshaped_tensor);
     tensor_.resize(local_dim_, tensor_.size() / local_dim_);
-
-    // Log the final reshaped tensor dimensions
     std::cout << "Final reshaped tensor dimensions: (" << tensor_.rows() << "x" << tensor_.cols() << ")" << std::endl;
 }
 

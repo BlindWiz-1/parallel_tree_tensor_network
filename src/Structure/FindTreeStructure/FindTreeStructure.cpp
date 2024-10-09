@@ -14,21 +14,75 @@ struct pair_hash {
     }
 };
 
-std::shared_ptr<SNode> findTreeStructure(const Circuit& circuit, int random_state, bool flat) {
-    if (circuit.getLSites() == 1) {
-        return std::make_shared<SNode>("0");
+// Function to calculate Euclidean distance between two vectors
+double calculateDistance(const Eigen::VectorXd& point1, const Eigen::VectorXd& point2) {
+    return (point1 - point2).norm();
+}
+
+// K-means clustering implementation using Eigen
+std::vector<int> kMeansClustering(const Eigen::MatrixXd& similarity, int clusters, int maxIterations = 100) {
+    int n = similarity.rows();   // Number of data points
+    int d = similarity.cols();   // Dimension of each data point
+
+    Eigen::MatrixXd centroids(clusters, d);
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, n - 1);
+    for (int i = 0; i < clusters; ++i) {
+        centroids.row(i) = similarity.row(dis(gen));
     }
+
+    std::vector<int> labels(n, 0);
+
+    for (int iter = 0; iter < maxIterations; ++iter) {
+        bool isConverged = true;
+
+        for (int i = 0; i < n; ++i) {
+            double minDistance = std::numeric_limits<double>::max();
+            int closestCentroid = 0;
+
+            for (int j = 0; j < clusters; ++j) {
+                double distance = calculateDistance(similarity.row(i), centroids.row(j));
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestCentroid = j;
+                }
+            }
+
+            // Check if the label has changed
+            if (labels[i] != closestCentroid) {
+                isConverged = false;
+                labels[i] = closestCentroid;
+            }
+        }
+
+        if (isConverged) {
+            break;
+        }
+
+        centroids = Eigen::MatrixXd::Zero(clusters, d);
+        Eigen::VectorXi count = Eigen::VectorXi::Zero(clusters);
+
+        for (int i = 0; i < n; ++i) {
+            centroids.row(labels[i]) += similarity.row(i);
+            count(labels[i])++;
+        }
+
+        for (int j = 0; j < clusters; ++j) {
+            if (count(j) > 0) {
+                centroids.row(j) /= count(j);
+            }
+        }
+    }
+
+    return labels;
+}
+
+std::shared_ptr<SNode> findTreeStructure(const Circuit& circuit, int random_state, bool flat) {
+    Eigen::MatrixXd similarity = toSimilarityMatrix(circuit);
 
     int clusters = std::ceil(static_cast<double>(circuit.getLSites()) / 8);
-
-    Eigen::MatrixXd similarity = toSimilarityMatrix(circuit);
-    std::vector<int> labels(circuit.getLSites(), 0);
-
-    std::default_random_engine generator(random_state);
-    std::uniform_int_distribution<int> distribution(0, clusters - 1);
-    for (int i = 0; i < circuit.getLSites(); ++i) {
-        labels[i] = distribution(generator);
-    }
+    std::vector<int> labels = kMeansClustering(similarity, clusters);
 
     std::vector<std::shared_ptr<SNode>> children;
     for (int i = 0; i < clusters; ++i) {
