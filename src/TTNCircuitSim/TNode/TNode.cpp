@@ -5,6 +5,7 @@
 #include "../../Operations/Walker/Walker.h"
 #include <unsupported/Eigen/CXX11/Tensor>
 #include <iostream>
+#include <queue>
 #include <vector>
 
 TNode::TNode(const std::string& name, const Tensor& tensor, std::shared_ptr<TNode> parent)
@@ -115,6 +116,8 @@ std::pair<double, int> TNode::countDimensions() const {
 }
 
 void TNode::applyGate(const Tensor& gate_matrix) {
+    assert(isLeaf() && "Only applied to leaf");
+
     tensor_ = gate_matrix * tensor_;
 }
 
@@ -146,6 +149,8 @@ Eigen::Tensor<std::complex<double>, 3> convertUpdateToTensor(const std::vector<E
 
 // Function to apply the gate and reshape tensor
 void TNode::applyGateAndReshape(const std::vector<Eigen::MatrixXcd>& update) {
+    assert(isLeaf() && "Only applied to leaf");
+
     // Log initial tensor dimensions
     std::cout << "Applying Gate and Reshape" << std::endl;
     std::cout << "Tensor dimensions (rows x cols): (" << tensor_.rows() << "x" << tensor_.cols() << ")" << std::endl;
@@ -189,39 +194,60 @@ void TNode::applyGateAndReshape(const std::vector<Eigen::MatrixXcd>& update) {
 }
 
 std::shared_ptr<TNode> TNode::getItem(int key) {
+
+    std::string key_str = std::to_string(key);
+
     Walker walker;
     auto root = this->findRoot();
-
+    std::cout << "Searching for node with key: " << key << std::endl;
     auto path = walker.walk(root, nullptr);
 
+    std::cout << "Nodes traversed:" << std::endl;
     for (const auto& node : path) {
-        if (node->getLeafIndices().find(std::to_string(key)) != node->getLeafIndices().end()) {
+        std::cout << "Node name: " << node->getName() << ", Dimensions: (" << node->getTensor().rows() << "x" << node->getTensor().cols() << ")" << std::endl;
+    }
+
+    for (const auto& node : path) {
+        if (node->getName() == key_str) {
+            std::cout << "Found node: " << node->getName() << " matching key: " << key << std::endl;
             return node;  // Return the node that matches the key.
         }
     }
 
+    std::cout << "No node found for key: " << key << std::endl;
     return nullptr;  // Return nullptr if no node with the key is found.
 }
 
 std::vector<std::shared_ptr<TNode>> TNode::getItem(int site_i, int site_j) {
-    Walker walker;
-
-    // Find the root node from the current node
+    // Validate if root is set correctly
     auto root = this->findRoot();
-
-    // Use the simple getItem to find the starting and stopping nodes
-    std::shared_ptr<TNode> node_i = root->getItem(site_i);
-    std::shared_ptr<TNode> node_j = root->getItem(site_j);
-
-    // If either of the nodes is null, return an empty result
-    if (!node_i || !node_j) {
+    if (!root) {
+        std::cerr << "Error: Root node is not set correctly." << std::endl;
         return {};
     }
 
-    // Use the walker to find the path between node_i and node_j
-    auto path = walker.walk(node_i, node_j);
+    // Use getItem to find nodes corresponding to site_i and site_j
+    std::shared_ptr<TNode> node_i = root->getItem(site_i);
+    std::shared_ptr<TNode> node_j = root->getItem(site_j);
 
+    if (!node_i || !node_j) {
+        std::cerr << "Error: Either node_i or node_j could not be found." << std::endl;
+        return {};
+    }
+
+    // Create a walker instance to find path between nodes
+    Walker walker;
+    auto path = walker.walk(node_i, node_j);
     return path;
+}
+
+std::vector<std::shared_ptr<TNode>> TNode::getIntermediateNodes(int site_i, int site_j) {
+    std::vector<std::shared_ptr<TNode>> path = getItem(site_i, site_j);  // Get the full path
+    if (path.size() <= 2) {
+        return {};  // No intermediate nodes exist if path is too short
+    }
+    // Return the intermediate nodes (excluding start and end nodes)
+    return std::vector<std::shared_ptr<TNode>>(path.begin() + 1, path.end() - 1);
 }
 
 void TNode::update(int gate_dim, int site_i, int site_j) {
@@ -242,6 +268,7 @@ void TNode::update(int gate_dim, int site_i, int site_j) {
 
     Eigen::Index new_rows = rows;
     Eigen::Index new_cols = cols;
+
     if (index_i < index_j) {
         new_rows *= gate_dim;
     } else {

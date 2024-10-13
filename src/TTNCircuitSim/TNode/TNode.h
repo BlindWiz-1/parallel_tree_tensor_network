@@ -6,6 +6,7 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include <unsupported/Eigen/CXX11/Tensor>
 
 using Tensor = Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic>;
 
@@ -32,6 +33,7 @@ public:
 
     std::shared_ptr<TNode> getItem(int key);
     std::vector<std::shared_ptr<TNode>> getItem(int site_i, int site_j);
+    std::vector<std::shared_ptr<TNode>> getIntermediateNodes(int site_i, int site_j);
 
     std::shared_ptr<TNode> findRoot();
 

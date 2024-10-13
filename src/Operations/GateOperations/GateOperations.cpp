@@ -103,8 +103,8 @@ void GateOperations::applyTwoParticleGate(TTN& psi, const Eigen::MatrixXcd& gate
     int gate_dim = singular_values.size();
 
     // Wire all common nodes on the path from i to j (excluding the leaves)
-    auto nodes = psi.getTNodeRoot()->getItem(site_i, site_j);
-    for (auto& node : psi.getTNodeRoot()->getItem(site_i + 1, site_j - site_i - 1)) {
+    auto nodes = psi.getTNodeRoot()->getIntermediateNodes(site_i, site_j);
+    for (auto& node : nodes) {
         node->update(gate_dim, site_i, site_j);
     }
 }

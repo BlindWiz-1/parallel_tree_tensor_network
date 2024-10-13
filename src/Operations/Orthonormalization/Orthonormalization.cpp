@@ -40,14 +40,22 @@ Tensor orthonormalizeQR(const Tensor& tensor, const std::optional<Tensor>& facto
     return r_matrix;
 }
 
-Tensor orthonormalizeSVD(Tensor tensor, int i, int d_max, const std::optional<Tensor>& factor, const std::unordered_map<std::string, int>& leaf_indices) {
+Tensor orthonormalizeSVD(TNode& node, int i, int d_max) {
+    // Extract the tensor from the node
+    Tensor tensor = node.getTensor();
+    auto factor = node.getTmpFactor();
 
+    // Contract with factor if provided, same as in Python
     if (factor.has_value()) {
+        std::cout << "Factor dims: (" << factor.value().rows() << "x" << factor.value().cols() << ")" << std::endl;
         assert(factor.value().cols() == tensor.rows() && "Factor and tensor dimensions must match for contraction");
-        tensor = contractFactorOnIndex(tensor, factor.value(), leaf_indices.at(std::to_string(i)));
+        tensor = contractFactorOnIndex(tensor, factor.value(), node.getLeafIndices().at(std::to_string(i)));
     }
 
-    // Reshape the tensor for SVD
+    // Log the dimensions before reshaping and SVD
+    std::cout << "Tensor dimensions before SVD: (" << tensor.rows() << "x" << tensor.cols() << ")" << std::endl;
+
+    // Reshape the tensor for SVD, similar to reshaping in Python: tensor.reshape(-1, shape[-1])
     Eigen::Index rows = tensor.rows();
     Eigen::Index cols = tensor.cols();
     Tensor reshaped_tensor = tensor.reshaped(rows * cols, 1);  // Flatten into 2D matrix
@@ -58,7 +66,7 @@ Tensor orthonormalizeSVD(Tensor tensor, int i, int d_max, const std::optional<Te
     Eigen::VectorXd singular_values = svd.singularValues();
     Tensor v_matrix = svd.matrixV();
 
-    // Truncate if necessary
+    // Truncate singular values if necessary
     int effective_d_max = std::min(d_max, static_cast<int>(singular_values.size()));
     u_matrix.conservativeResize(Eigen::NoChange, effective_d_max);
     v_matrix.conservativeResize(effective_d_max, Eigen::NoChange);
@@ -67,9 +75,12 @@ Tensor orthonormalizeSVD(Tensor tensor, int i, int d_max, const std::optional<Te
     // Reshape U back to the original dimensions of the tensor
     u_matrix.resize(rows, effective_d_max);
 
-    // Set the current node tensor to U and return S * V
-    Tensor result = singular_values.asDiagonal() * v_matrix.adjoint();
+    // Set the current node tensor to U and log the change
+    node.setTensor(u_matrix);
+    std::cout << "Updated node tensor dimensions: (" << u_matrix.rows() << "x" << u_matrix.cols() << ")" << std::endl;
 
+    // Return the modified S * V matrix as in the Python version
+    Tensor result = singular_values.asDiagonal() * v_matrix.adjoint();
     return result;
 }
 
@@ -94,11 +105,9 @@ void precontractRoot(TNode& node, int site_j, const Tensor& factor) {
     Eigen::Tensor<std::complex<double>, 2> tmp_factor = tensorMap(node.getTmpFactor().value());
     Eigen::Tensor<std::complex<double>, 2> factor_tensor = tensorMap(factor);
 
-    // Extract and validate temporary dimension
     int tmp_dim = node.getTmpDim();
     assert(tmp_dim > 0 && "Temporary dimension must be greater than 0");
 
-    // Ensure leaf indices are correctly set
     int site_i = node.getLeafIndices().at(std::to_string(node.getTmpIndex()));
     site_j = node.getLeafIndices().at(std::to_string(site_j));
     std::cout << "Site index i: " << site_i << ", Site index j: " << site_j << std::endl;
