@@ -1,7 +1,7 @@
 #include "TTNContract.h"
-#include <numeric>
 #include "../../TTNCircuitSim/TNode/TNode.h"
 #include <unsupported/Eigen/CXX11/Tensor>
+#include <Eigen/Dense>
 
 // Helper function: Converts Eigen::MatrixXcd to Eigen::Tensor
 Eigen::Tensor<std::complex<double>, 2> toTensor(const Eigen::MatrixXcd& matrix) {
@@ -13,95 +13,61 @@ Eigen::MatrixXcd toMatrix(const Eigen::Tensor<std::complex<double>, 2>& tensor) 
     return Eigen::Map<const Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic>>(tensor.data(), tensor.dimension(0), tensor.dimension(1));
 }
 
-// Contract function with additional checks and debug information
 Tensor contract(const std::shared_ptr<TNode>& node, double nrm) {
+
     if (node->isLeaf()) {
         std::cout << "Leaf node detected: " << node->getName() << std::endl;
-        // Print the dimensions of the leaf tensor
-        std::cout << "Leaf tensor dimensions: (" << node->getTensor().rows() << "x" << node->getTensor().cols() << ")" << std::endl;
-        return node->getTensor();  // Return leaf tensor as it is
+        auto tensor_variant = node->getTensor();
+
+        if (std::holds_alternative<Eigen::MatrixXcd>(tensor_variant)) {
+            return std::get<Eigen::MatrixXcd>(tensor_variant);  // Leaves are already contracted as Matrix
+        }
     }
 
-    // Print initial debug information for non-leaf node
-    std::cout << "Contracting node: " << node->getName() << std::endl;
-    std::cout << "Initial tensor dimensions: (" << node->getTensor().rows() << "x" << node->getTensor().cols() << ")" << std::endl;
+    std::vector<Eigen::Tensor<std::complex<double>, 2>> child_tensors;
 
-    // Convert current node tensor to Eigen::Tensor
-    auto parent_tensor = toTensor(node->getTensor());
-    int counter = parent_tensor.dimension(1);  // Number of columns as initial counter value
-    std::vector<Eigen::Tensor<std::complex<double>, 2>> tensors = {parent_tensor};
-    std::vector<Eigen::Index> indices;
-
-    // Track initial indices
-    for (Eigen::Index i = 0; i < parent_tensor.dimension(1); ++i) {
-        indices.push_back(static_cast<Eigen::Index>(i));
+    // Recursively contract all child nodes
+    for (const auto& child : node->getChildren()) {
+        auto child_tensor = toTensor(contract(child, 1));  // Recursively contract child
+        child_tensors.push_back(child_tensor);
     }
 
-    // Recursively contract each child and add to the tensor list
-    for (size_t idx = 0; idx < node->getChildren().size(); ++idx) {
-        auto child = node->getChildren()[idx];
-        std::cout << "Processing child node: " << child->getName() << std::endl;
+    auto parent_tensor_variant = node->getTensor();
+    Eigen::Tensor<std::complex<double>, 2> parent_tensor;
+    parent_tensor = std::get<Eigen::Tensor<std::complex<double>, 3>>(parent_tensor_variant).chip(0, 2);
 
-        auto child_tensor = toTensor(contract(child, 1));  // Ensure child tensor uses consistent layout
-        std::cout << "Child tensor dimensions: (" << child_tensor.dimension(0) << "x" << child_tensor.dimension(1) << ")" << std::endl;
+    std::cout << "Parent tensor dimensions before contraction: ("
+              << parent_tensor.dimension(0) << "x" << parent_tensor.dimension(1) <<  "x" << parent_tensor.dimension(2)  <<  ")" << std::endl;
 
-        // Track indices for alignment
-        std::vector<Eigen::Index> child_indices(child_tensor.dimension(1) - 1);
-        std::iota(child_indices.begin(), child_indices.end(), counter);
-        counter += child_tensor.dimension(1) - 1;
-        child_indices.emplace_back(idx);
+    for (const auto& child_tensor : child_tensors) {
+        std::cout << "Contracting with child tensor dimensions: ("
+                  << child_tensor.dimension(0) << "x" << child_tensor.dimension(1) << ")" << std::endl;
 
-        tensors.push_back(child_tensor);
-        indices.insert(indices.end(), child_indices.begin(), child_indices.end());
-    }
+        // Dynamically set contraction dimensions
+        Eigen::array<Eigen::IndexPair<int>, 1> contraction_dims = {Eigen::IndexPair<int>(1, 0)};  // Adjust based on tensor structure
 
-    if (!node->isRoot()) {
-        indices.back() = counter;  // For non-root nodes, adjust parent index for alignment
-    } else {
-        // Add normalization factor at root node
-        Eigen::Tensor<std::complex<double>, 2> norm_tensor(1, 1);
-        norm_tensor(0, 0) = std::complex<double>(nrm, 0.0);
-        tensors.push_back(norm_tensor);
-        indices.emplace_back(parent_tensor.dimension(1) - 1);
-    }
-
-    std::cout << "Final indices for contraction: ";
-    for (const auto& index : indices) {
-        std::cout << index << " ";
-    }
-    std::cout << std::endl;
-
-    // Initialize result tensor with same layout as parent tensor
-    Eigen::Tensor<std::complex<double>, 2> result = tensors[0];
-
-    // Perform tensor contraction using a loop (similar to einsum logic in Python)
-    for (size_t i = 1; i < tensors.size(); ++i) {
-        // Debug: Log information about the tensors being contracted
-        std::cout << "------------------- Contracting Tensor " << i << " -------------------" << std::endl;
-        std::cout << "Result tensor dimensions before contraction: (" << result.dimension(0) << "x" << result.dimension(1) << ")" << std::endl;
-        std::cout << "Tensor " << i << " dimensions: (" << tensors[i].dimension(0) << "x" << tensors[i].dimension(1) << ")" << std::endl;
-
-        // Check the indices used for contraction
-        std::cout << "Indices for contraction: (" << indices[i - 1] << ", " << indices[i] << ")" << std::endl;
-
-        // Align tensor dimensions and perform contraction
-        Eigen::array<Eigen::IndexPair<int>, 1> contraction_dims = {Eigen::IndexPair<int>(indices[i - 1], indices[i])};
-
-        // Debug: Log the contraction dimensions
-        std::cout << "Contraction dimensions: (" << contraction_dims[0].first << ", " << contraction_dims[0].second << ")" << std::endl;
+        // Check if dimensions match for contraction
+        if (parent_tensor.dimension(1) != child_tensor.dimension(0)) {
+            std::cerr << "Dimension mismatch detected: parent_tensor dimension "
+                      << parent_tensor.dimension(1) << " and child tensor dimension "
+                      << child_tensor.dimension(0) << std::endl;
+            continue;  // Skip contracting this tensor if there's a mismatch
+        }
 
         // Perform the contraction
-        result = result.contract(tensors[i], contraction_dims);
+        parent_tensor = parent_tensor.contract(child_tensor, contraction_dims);
 
-        // Debug: Log result tensor dimensions after contraction
-        std::cout << "Result tensor dimensions after contraction: (" << result.dimension(0) << "x" << result.dimension(1) << ")" << std::endl;
-        std::cout << "-------------------------------------------------------------" << std::endl;
+        std::cout << "Result tensor dimensions after contraction: ("
+                  << parent_tensor.dimension(0) << "x" << parent_tensor.dimension(1) << ")" << std::endl;
     }
 
-    // Print final result tensor dimensions
-    std::cout << "Final contracted tensor dimensions: (" << result.dimension(0) << "x" << result.dimension(1) << ")" << std::endl;
+    // Apply normalization if this is the root node
+    if (node->isRoot()) {
+        Eigen::Tensor<std::complex<double>, 2> norm_tensor(1, 1);
+        norm_tensor(0, 0) = std::complex<double>(nrm, 0.0);
+        parent_tensor = parent_tensor.contract(norm_tensor, Eigen::array<Eigen::IndexPair<int>, 1>{});
+    }
 
-    // Convert the final Eigen::Tensor result back to Eigen::MatrixXcd
-    Eigen::MatrixXcd final_matrix = toMatrix(result);
+    Eigen::MatrixXcd final_matrix = toMatrix(parent_tensor);
     return final_matrix;
 }

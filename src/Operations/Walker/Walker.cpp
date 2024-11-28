@@ -1,20 +1,13 @@
 #include "Walker.h"
 
-#include <unordered_map>
 #include <unordered_set>
-#include <stack>
-#include <queue>
 #include <memory>
 #include <vector>
 #include "../../TTNCircuitSim/TNode/TNode.h"
 
 std::vector<std::shared_ptr<TNode>> Walker::walk(const std::shared_ptr<TNode>& start, const std::shared_ptr<TNode>& stop) {
     std::vector<std::shared_ptr<TNode>> path;
-    if (!start) return path;  // Return empty path if the start node is null
-
-    // Debug: Print starting and stopping nodes
-    std::cout << "Starting traversal from node: " << start->getName() << std::endl;
-    if (stop) std::cout << "Stopping traversal at node: " << stop->getName() << std::endl;
+    if (!start) return path;
 
     std::unordered_set<std::shared_ptr<TNode>> visited;
     std::function<void(const std::shared_ptr<TNode>&)> traverse;

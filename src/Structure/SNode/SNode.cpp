@@ -5,6 +5,7 @@ SNode::SNode(const std::string& name, std::shared_ptr<SNode> parent, const std::
     : name_(name), parent_(parent), children_(children) {}
 
 void SNode::addChild(std::shared_ptr<SNode> child) {
+    child->parent_ = shared_from_this();  // Set this node as the parent of the child
     children_.push_back(child);
 }
 
@@ -12,8 +13,12 @@ const std::string& SNode::getName() const {
     return name_;
 }
 
+void SNode::setName(const std::string& name) {
+    name_ = name;
+}
+
 std::shared_ptr<SNode> SNode::getParent() const {
-    return parent_.lock();
+    return parent_;
 }
 
 const std::vector<std::shared_ptr<SNode>>& SNode::getChildren() const {
@@ -25,7 +30,7 @@ bool SNode::isLeaf() const {
 }
 
 bool SNode::isRoot() const {
-    return parent_.expired();
+    return parent_ == nullptr;
 }
 
 void SNode::display(int depth) const {
@@ -33,6 +38,7 @@ void SNode::display(int depth) const {
         std::cout << "  ";
     }
     std::cout << name_ << std::endl;
+
     for (const auto& child : children_) {
         child->display(depth + 1);
     }

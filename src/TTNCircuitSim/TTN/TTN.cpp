@@ -41,10 +41,6 @@ int TTN::nSites() const {
     return countLeaves(root_);
 }
 
-Eigen::MatrixXd TTN::dtype() const {
-    return root_->getTensor().real();
-}
-
 std::shared_ptr<TTN> TTN::basisState(int local_dim,
     const std::vector<int>& single_states,
     const std::shared_ptr<SNode>& structure,
@@ -136,32 +132,39 @@ int TTN::maxLeaves() const {
 }
 
 void TTN::orthonormalize(int site_i, int site_j) {
-    Eigen::Matrix<std::complex<double>, -1, -1> factor;  // Stores the factor after normalization
-    std::optional<Eigen::Matrix<std::complex<double>, -1, -1>> tmp_factor;
+    Eigen::MatrixXcd factor;  // Stores the factor after normalization
 
     std::cout << "Starting orthonormalization from site " << site_i << " to site " << site_j << std::endl;
 
     // **First Loop: Traverse from site_i upwards**
-    for (auto node = root_->getItem(site_i); node != nullptr; node = node->getParent()) {
-        std::cout << "Node dimensions at site " << node->getName() << " before normalization: (" << node->getTensor().rows() << "x" << node->getTensor().cols() << ")" << std::endl;
+    for (auto node = root_->getItem(std::to_string(site_i)); node != nullptr; node = node->getParent()) {
+        auto tensor_variant = node->getTensor();
 
-        // Check if site_j is in the current node's leaf indices (indicating common ancestor)
+        // Print tensor dimensions based on the type
+        if (std::holds_alternative<Eigen::MatrixXcd>(tensor_variant)) {
+            const auto& tensor_matrix = std::get<Eigen::MatrixXcd>(tensor_variant);
+            std::cout << "Node dimensions at site " << node->getName() << " before normalization: ("
+                      << tensor_matrix.rows() << "x" << tensor_matrix.cols() << ")" << std::endl;
+        } else if (std::holds_alternative<Eigen::Tensor<std::complex<double>, 3>>(tensor_variant)) {
+            const auto& tensor_tensor = std::get<Eigen::Tensor<std::complex<double>, 3>>(tensor_variant);
+            std::cout << "Node dimensions at site " << node->getName() << " before normalization: ("
+                      << tensor_tensor.dimension(0) << "x" << tensor_tensor.dimension(1) << "x" << tensor_tensor.dimension(2) << ")" << std::endl;
+        }
+
+        // Stop when the common ancestor with `site_j` is found
         if (node->getLeafIndices().count(std::to_string(site_j))) {
-            // If the current node is the root, store the factor in tmp_factor
             if (node->isRoot()) {
                 node->setTmpFactor(factor);
             } else {
-                // For non-root nodes, contract the factor into the node's tensor
-                contractFactorOnIndex(node->getTensor(), factor, site_i);
+                contractFactorOnIndex(node, factor, site_i);
             }
-            break;  // Early exit since we've found the common ancestor
+            break;
         }
 
-        // Perform orthonormalization and update the factor
-        factor = orthonormalizeSVD(*node, site_i, d_max_);
+        // Perform SVD-based orthonormalization and update the factor
+        factor = orthonormalizeSVD(node, site_i, d_max_);
         std::cout << "Factor dimensions after normalization: (" << factor.rows() << "x" << factor.cols() << ")" << std::endl;
 
-        // Stop if the factor is a square identity matrix (early stopping)
         if (isSquareIdentity(factor)) {
             std::cout << "Early stopping: Factor is a square identity matrix." << std::endl;
             break;
@@ -169,42 +172,50 @@ void TTN::orthonormalize(int site_i, int site_j) {
     }
 
     // Reset the factor for the second loop
-    factor = Eigen::Matrix<std::complex<double>, -1, -1>();
+    factor = Eigen::MatrixXcd();
 
     // **Second Loop: Traverse from site_j upwards**
-    for (auto node = root_->getItem(site_j); node != nullptr; node = node->getParent()) {
-        std::cout << "Node dimensions at start of site j " << node->getName() << " before normalization: (" << node->getTensor().rows() << "x" << node->getTensor().cols() << ")" << std::endl;
+    for (auto node = root_->getItem(std::to_string(site_j)); node != nullptr; node = node->getParent()) {
+        auto tensor_variant = node->getTensor();
 
-        // Special handling for the root node during site_j traversal
-        if (node->isRoot() && node->getTmpFactor()->rows() != 0 && node->getTmpFactor()->cols() != 0) {
-            std::cout << "Handling root contraction." << std::endl;
-            precontractRoot(*node, site_j, factor);  // Contract the stored factor at the root
-            factor = Eigen::MatrixXcd();  // Reset the factor again after root contraction
+        if (std::holds_alternative<Eigen::MatrixXcd>(tensor_variant)) {
+            const auto& tensor_matrix = std::get<Eigen::MatrixXcd>(tensor_variant);
+            std::cout << "Node dimensions at start of site j " << node->getName() << " before normalization: ("
+                      << tensor_matrix.rows() << "x" << tensor_matrix.cols() << ")" << std::endl;
+        } else if (std::holds_alternative<Eigen::Tensor<std::complex<double>, 3>>(tensor_variant)) {
+            const auto& tensor_tensor = std::get<Eigen::Tensor<std::complex<double>, 3>>(tensor_variant);
+            std::cout << "Node dimensions at start of site j " << node->getName() << " before normalization: ("
+                      << tensor_tensor.dimension(0) << "x" << tensor_tensor.dimension(1) << "x" << tensor_tensor.dimension(2) << ")" << std::endl;
         }
 
-        // Perform orthonormalization and update the factor for site_j
-        factor = orthonormalizeSVD(*node, site_j, d_max_);
+        // Handle special case for root node during traversal from site_j
+        if (node->isRoot() && node->getTmpFactor().has_value() && node->getTmpFactor()->rows() != 0 && node->getTmpFactor()->cols() != 0) {
+            std::cout << "Handling root contraction." << std::endl;
+            precontractRoot(node, site_j, factor);
+            factor = Eigen::MatrixXcd();
+        }
+
+        // Perform SVD-based orthonormalization and update the factor for site_j
+        factor = orthonormalizeSVD(node, site_j, d_max_);
         std::cout << "Factor dimensions after normalization: (" << factor.rows() << "x" << factor.cols() << ")" << std::endl;
 
-        // Stop if the factor is a square identity matrix (early stopping)
         if (isSquareIdentity(factor)) {
             std::cout << "Early stopping: Factor is a square identity matrix." << std::endl;
             break;
         }
     }
 
-    // If the final factor is valid, update the normalization factor
     if (factor.size() > 0) {
         nrm_ *= factor(0, 0).real();
         std::cout << "Updated normalization factor: " << nrm_ << std::endl;
     }
 }
 
-bool TTN::isSquareIdentity(const Tensor& factor) const {
+bool TTN::isSquareIdentity(const Eigen::MatrixXcd& factor) const {
     if (factor.size() == 0 || factor.rows() != factor.cols()) {
         return false;
     }
-    return factor.isApprox(Eigen::MatrixXd::Identity(factor.rows(), factor.cols()));
+    return factor.isApprox(Eigen::MatrixXcd::Identity(factor.rows(), factor.cols()));
 }
 
 void TTN::display() const {

@@ -25,6 +25,8 @@ int main() {
     GateOperations::applyCircuit(*psi, circ);
 
     std::cout << "Number of qubits: " << psi->nSites() << std::endl;
+    std::cout << "State of tree after circuit application" << std::endl;
+    psi->display();
     std::cout << "Output state as vector (should be the GHZ state):" << std::endl;
     std::cout << psi->asVector().transpose() << std::endl;
 

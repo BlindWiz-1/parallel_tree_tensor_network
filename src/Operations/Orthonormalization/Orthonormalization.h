@@ -1,25 +1,15 @@
-//
-// Created by Denado Rabeli on 7/28/24.
-//
-
 #ifndef ORTHONORMALIZATION_H
 #define ORTHONORMALIZATION_H
 
+#include <memory>
 #include <Eigen/Dense>
-#include <optional>
-#include "../../TTNCircuitSim/TNode/TNode.h"
-#include "../../TTNCircuitSim/PseudoTNode/PseudoTNode.h"
+#include <unsupported/Eigen/CXX11/Tensor>
 
-// Function to perform QR orthonormalization
-Tensor orthonormalizeQR(const Tensor& tensor, const std::optional<Tensor>& factor, const std::unordered_map<std::string, int>& leaf_indices, int i);
+class TNode;  // Forward declaration
 
-// Function to perform SVD orthonormalization
-Tensor orthonormalizeSVD(TNode& tensor, int i, int d_max);
-
-// Function to contract a factor on a given index
-Tensor contractFactorOnIndex(const Tensor& tensor, const Tensor& factor, int idx);
-
-// Function to precontract the root node
-void precontractRoot(TNode& node, int site_j, const Tensor& factor);
+// Function declarations
+Eigen::MatrixXcd orthonormalizeSVD(const std::shared_ptr<TNode>& node, int i, int d_max);
+void contractFactorOnIndex(const std::shared_ptr<TNode>& node, const Eigen::MatrixXcd& factor, int index);
+void precontractRoot(const std::shared_ptr<TNode>& node, int site_j, const Eigen::MatrixXcd& factor);
 
 #endif // ORTHONORMALIZATION_H

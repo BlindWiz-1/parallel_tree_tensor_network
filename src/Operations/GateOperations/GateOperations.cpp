@@ -13,7 +13,7 @@
 
 void GateOperations::applySingleParticleGate(TTN& psi, const Eigen::MatrixXcd& gate_matrix, int site) {
     assert(0 <= site && site < psi.nSites());
-    psi.getTNodeRoot()->getItem(site)->applyGate(gate_matrix);
+    psi.getTNodeRoot()->getItem(std::to_string(site))->applyGate(gate_matrix);
 }
 
 // Function to reshape a 2D matrix to a 4D-like structure and transpose it accordingly
@@ -67,17 +67,22 @@ std::tuple<std::vector<Eigen::MatrixXcd>, Eigen::VectorXd, std::vector<Eigen::Ma
     v_matrix = v_matrix.leftCols(num_nonzero);
     singular_values = singular_values.head(num_nonzero);
 
-    // Step 4: Reshape u_matrix and v_matrix to 3D-like structures using vector of MatrixXcd
-    std::cout << "U matrix dimensions before reshape: (" << u_matrix.rows() << "x" << u_matrix.cols() << ")\n";
-    std::cout << "V matrix dimensions before reshape: (" << v_matrix.rows() << "x" << v_matrix.cols() << ")\n";
-
     std::vector<Eigen::MatrixXcd> u_tensor = reshapeMatrixTo3D(u_matrix, local_dimension, local_dimension, num_nonzero);
     std::vector<Eigen::MatrixXcd> v_tensor = reshapeMatrixTo3D(v_matrix, local_dimension, local_dimension, num_nonzero);
 
-    std::cout << "U tensor slices: " << u_tensor.size() << " x " << u_tensor[0].rows() << "x" << u_tensor[0].cols() << "\n";
-    std::cout << "V tensor slices: " << v_tensor.size() << " x " << v_tensor[0].rows() << "x" << v_tensor[0].cols() << "\n";
-
     return std::make_tuple(u_tensor, singular_values, v_tensor);
+}
+
+void printTensorDimensions(const std::variant<Eigen::MatrixXcd, Eigen::Tensor<std::complex<double>, 3>>& tensor) {
+    if (std::holds_alternative<Eigen::MatrixXcd>(tensor)) {
+        const auto& matrix = std::get<Eigen::MatrixXcd>(tensor);
+        std::cout << "(" << matrix.rows() << "x" << matrix.cols() << ")" << std::endl;
+    } else if (std::holds_alternative<Eigen::Tensor<std::complex<double>, 3>>(tensor)) {
+        const auto& tensor_3d = std::get<Eigen::Tensor<std::complex<double>, 3>>(tensor);
+        std::cout << "(" << tensor_3d.dimension(0) << "x" << tensor_3d.dimension(1) << "x" << tensor_3d.dimension(2) << ")" << std::endl;
+    } else {
+        std::cerr << "Unknown tensor type!" << std::endl;
+    }
 }
 
 void GateOperations::applyTwoParticleGate(TTN& psi, const Eigen::MatrixXcd& gate_matrix, int site_i, int site_j) {
@@ -88,24 +93,55 @@ void GateOperations::applyTwoParticleGate(TTN& psi, const Eigen::MatrixXcd& gate
     Eigen::VectorXd singular_values;
     std::tie(u_matrix, singular_values, v_matrix) = decomposeTwoParticleGate(gate_matrix, psi.localDim());
 
-    auto node_i = psi.getTNodeRoot()->getItem(site_i);
-    auto node_j = psi.getTNodeRoot()->getItem(site_j);
+    // Scale U and V by sqrt(singular_values)
+    for (int i = 0; i < singular_values.size(); ++i) {
+        std::complex<double> scale_factor = std::complex<double>(std::sqrt(singular_values[i]), 0.0);
+        u_matrix[i] *= scale_factor;
+        v_matrix[i] *= scale_factor;
+    }
 
-    // Print tensor dimensions at site_i and site_j before applying gate
-    std::cout << "Tensor at site " << site_i << " dimensions: (" << node_i->getTensor().rows() << "x" << node_i->getTensor().cols() << ")" << std::endl;
-    std::cout << "Tensor at site " << site_j << " dimensions: (" << node_j->getTensor().rows() << "x" << node_j->getTensor().cols() << ")" << std::endl;
+    auto node_i = psi.getTNodeRoot()->getItem(std::to_string(site_i));
+    auto node_j = psi.getTNodeRoot()->getItem(std::to_string(site_j));
+
+    // Logging tensor dimensions before applying gate
+    std::cout << "Tensor at site " << site_i << " dimensions: ";
+    printTensorDimensions(node_i->getTensor());
+    std::cout << "Tensor at site " << site_j << " dimensions: ";
+    printTensorDimensions(node_j->getTensor());
 
     // Apply gate and reshape
     node_i->applyGateAndReshape(u_matrix);
     node_j->applyGateAndReshape(v_matrix);
 
-    // Get the dimension of the gate
+    // Logging tensor dimensions after applying gate
+    std::cout << "Tensor at site " << site_i << " after reshaping: ";
+    printTensorDimensions(node_i->getTensor());
+    std::cout << "Tensor at site " << site_j << " after reshaping: ";
+    printTensorDimensions(node_j->getTensor());
+
+    // Dimension check
     int gate_dim = singular_values.size();
+    assert(gate_dim > 0 && "Gate dimension after SVD truncation should be non-zero");
 
     // Wire all common nodes on the path from i to j (excluding the leaves)
-    auto nodes = psi.getTNodeRoot()->getIntermediateNodes(site_i, site_j);
+    auto nodes = psi.getTNodeRoot()->getIntermediateNodes(std::to_string(site_i), std::to_string(site_j));
     for (auto& node : nodes) {
+
+        std::cout << "Updating intermediate node " << node->getName() << " with gate_dim " << gate_dim << std::endl;
+        auto start_time = std::chrono::high_resolution_clock::now();
         node->update(gate_dim, site_i, site_j);
+        auto end_time = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+
+        if (duration > 10000) {
+            std::cerr << "Wiring of " << node->getName() << " with shape ";
+            printTensorDimensions(node->getTensor());
+            std::cerr << " took " << duration / 1000 << " seconds" << std::endl;
+        } else {
+            std::cout << "Wiring of " << node->getName() << " with shape ";
+            printTensorDimensions(node->getTensor());
+            std::cout << " took " << duration / 1000 << " seconds" << std::endl;
+        }
     }
 }
 
