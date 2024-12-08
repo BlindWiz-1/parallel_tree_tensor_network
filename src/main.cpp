@@ -15,7 +15,7 @@ int main() {
     // Start from computational basis state
     const std::vector<int> single_states = {0, 0, 0};
 
-    Circuit circ(4, d);
+    Circuit circ(3, d);
 
     circ.appendGate(CircuitGate(QuantumGate::H, {0}));
     circ.appendGate(CircuitGate(QuantumGate::CNOT, {0, 1}));

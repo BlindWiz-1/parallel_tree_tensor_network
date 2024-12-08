@@ -13,8 +13,22 @@ Eigen::MatrixXcd toMatrix(const Eigen::Tensor<std::complex<double>, 2>& tensor) 
     return Eigen::Map<const Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic>>(tensor.data(), tensor.dimension(0), tensor.dimension(1));
 }
 
-Tensor contract(const std::shared_ptr<TNode>& node, double nrm) {
+Eigen::Tensor<std::complex<double>, 2> matrixToTensor(
+    const Eigen::MatrixXcd& matrix,
+    Eigen::Index rows,
+    Eigen::Index cols) {
+    Eigen::Tensor<std::complex<double>, 2> tensor(rows, cols);
 
+    for (Eigen::Index i = 0; i < rows; ++i) {
+        for (Eigen::Index j = 0; j < cols; ++j) {
+            tensor(i, j) = matrix(i, j);
+        }
+    }
+
+    return tensor;
+}
+
+Eigen::MatrixXcd contract(const std::shared_ptr<TNode>& node, double nrm) {
     if (node->isLeaf()) {
         std::cout << "Leaf node detected: " << node->getName() << std::endl;
         auto tensor_variant = node->getTensor();
@@ -34,24 +48,28 @@ Tensor contract(const std::shared_ptr<TNode>& node, double nrm) {
 
     auto parent_tensor_variant = node->getTensor();
     Eigen::Tensor<std::complex<double>, 2> parent_tensor;
-    parent_tensor = std::get<Eigen::Tensor<std::complex<double>, 3>>(parent_tensor_variant).chip(0, 2);
+
+    if (std::holds_alternative<Eigen::MatrixXcd>(parent_tensor_variant)) {
+        auto matrix = std::get<Eigen::MatrixXcd>(parent_tensor_variant);
+        parent_tensor = matrixToTensor(matrix, matrix.rows(), matrix.cols());
+    } else if (std::holds_alternative<Eigen::Tensor<std::complex<double>, 3>>(parent_tensor_variant)) {
+        parent_tensor = std::get<Eigen::Tensor<std::complex<double>, 3>>(parent_tensor_variant).chip(0, 2);
+    } else {
+        throw std::runtime_error("Unsupported tensor format in contract");
+    }
 
     std::cout << "Parent tensor dimensions before contraction: ("
-              << parent_tensor.dimension(0) << "x" << parent_tensor.dimension(1) <<  "x" << parent_tensor.dimension(2)  <<  ")" << std::endl;
+              << parent_tensor.dimension(0) << "x" << parent_tensor.dimension(1) << ")" << std::endl;
 
     for (const auto& child_tensor : child_tensors) {
         std::cout << "Contracting with child tensor dimensions: ("
                   << child_tensor.dimension(0) << "x" << child_tensor.dimension(1) << ")" << std::endl;
 
-        // Dynamically set contraction dimensions
         Eigen::array<Eigen::IndexPair<int>, 1> contraction_dims = {Eigen::IndexPair<int>(1, 0)};  // Adjust based on tensor structure
 
         // Check if dimensions match for contraction
         if (parent_tensor.dimension(1) != child_tensor.dimension(0)) {
-            std::cerr << "Dimension mismatch detected: parent_tensor dimension "
-                      << parent_tensor.dimension(1) << " and child tensor dimension "
-                      << child_tensor.dimension(0) << std::endl;
-            continue;  // Skip contracting this tensor if there's a mismatch
+            throw std::runtime_error("Dimension mismatch detected during contraction");
         }
 
         // Perform the contraction
@@ -68,6 +86,5 @@ Tensor contract(const std::shared_ptr<TNode>& node, double nrm) {
         parent_tensor = parent_tensor.contract(norm_tensor, Eigen::array<Eigen::IndexPair<int>, 1>{});
     }
 
-    Eigen::MatrixXcd final_matrix = toMatrix(parent_tensor);
-    return final_matrix;
+    return toMatrix(parent_tensor);  // Convert back to Eigen::MatrixXcd
 }

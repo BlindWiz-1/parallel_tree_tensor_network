@@ -132,15 +132,15 @@ int TTN::maxLeaves() const {
 }
 
 void TTN::orthonormalize(int site_i, int site_j) {
-    Eigen::MatrixXcd factor;  // Stores the factor after normalization
+    Eigen::MatrixXcd factor;
 
     std::cout << "Starting orthonormalization from site " << site_i << " to site " << site_j << std::endl;
 
-    // **First Loop: Traverse from site_i upwards**
+    // First traversal from site_i upwards
     for (auto node = root_->getItem(std::to_string(site_i)); node != nullptr; node = node->getParent()) {
         auto tensor_variant = node->getTensor();
 
-        // Print tensor dimensions based on the type
+        // Print tensor dimensions
         if (std::holds_alternative<Eigen::MatrixXcd>(tensor_variant)) {
             const auto& tensor_matrix = std::get<Eigen::MatrixXcd>(tensor_variant);
             std::cout << "Node dimensions at site " << node->getName() << " before normalization: ("
@@ -151,20 +151,22 @@ void TTN::orthonormalize(int site_i, int site_j) {
                       << tensor_tensor.dimension(0) << "x" << tensor_tensor.dimension(1) << "x" << tensor_tensor.dimension(2) << ")" << std::endl;
         }
 
-        // Stop when the common ancestor with `site_j` is found
+        // Stop when the common ancestor with site_j is found
         if (node->getLeafIndices().count(std::to_string(site_j))) {
             if (node->isRoot()) {
                 node->setTmpFactor(factor);
             } else {
+                std::cout << "Contracting factor at site " << node->getName() << std::endl;
                 contractFactorOnIndex(node, factor, site_i);
             }
             break;
         }
 
-        // Perform SVD-based orthonormalization and update the factor
+        // Perform SVD-based orthonormalization
         factor = orthonormalizeSVD(node, site_i, d_max_);
         std::cout << "Factor dimensions after normalization: (" << factor.rows() << "x" << factor.cols() << ")" << std::endl;
 
+        // Early stopping condition
         if (isSquareIdentity(factor)) {
             std::cout << "Early stopping: Factor is a square identity matrix." << std::endl;
             break;
@@ -174,10 +176,11 @@ void TTN::orthonormalize(int site_i, int site_j) {
     // Reset the factor for the second loop
     factor = Eigen::MatrixXcd();
 
-    // **Second Loop: Traverse from site_j upwards**
+    // Second traversal from site_j upwards
     for (auto node = root_->getItem(std::to_string(site_j)); node != nullptr; node = node->getParent()) {
         auto tensor_variant = node->getTensor();
 
+        // Log tensor dimensions
         if (std::holds_alternative<Eigen::MatrixXcd>(tensor_variant)) {
             const auto& tensor_matrix = std::get<Eigen::MatrixXcd>(tensor_variant);
             std::cout << "Node dimensions at start of site j " << node->getName() << " before normalization: ("
@@ -188,23 +191,25 @@ void TTN::orthonormalize(int site_i, int site_j) {
                       << tensor_tensor.dimension(0) << "x" << tensor_tensor.dimension(1) << "x" << tensor_tensor.dimension(2) << ")" << std::endl;
         }
 
-        // Handle special case for root node during traversal from site_j
-        if (node->isRoot() && node->getTmpFactor().has_value() && node->getTmpFactor()->rows() != 0 && node->getTmpFactor()->cols() != 0) {
+        // Handle root contraction
+        if (node->isRoot() && node->getTmpDim() != 0) {
             std::cout << "Handling root contraction." << std::endl;
             precontractRoot(node, site_j, factor);
             factor = Eigen::MatrixXcd();
         }
 
-        // Perform SVD-based orthonormalization and update the factor for site_j
+        // Perform SVD-based orthonormalization
         factor = orthonormalizeSVD(node, site_j, d_max_);
         std::cout << "Factor dimensions after normalization: (" << factor.rows() << "x" << factor.cols() << ")" << std::endl;
 
+        // Early stopping condition
         if (isSquareIdentity(factor)) {
             std::cout << "Early stopping: Factor is a square identity matrix." << std::endl;
             break;
         }
     }
 
+    // Update normalization factor
     if (factor.size() > 0) {
         nrm_ *= factor(0, 0).real();
         std::cout << "Updated normalization factor: " << nrm_ << std::endl;

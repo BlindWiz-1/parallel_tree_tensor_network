@@ -5,6 +5,7 @@
 #include <vector>
 #include <cassert>
 #include <set>
+#include <unsupported/Eigen/KroneckerProduct>
 
 TNode::TNode(const std::string& name, const Tensor& tensor, std::shared_ptr<TNode> parent)
     : name_(name), tensor_matrix_(tensor), parent_(parent), local_dim_(tensor.rows()), tmp_dim_(0), tmp_index_(-1) {}
@@ -397,76 +398,96 @@ void TNode::update(int gate_dim, int site_i, int site_j) {
         return;
     }
 
-    // Identify indices for expansion
-    int index_i = leaf_indices_.count(std::to_string(site_i))
-                  ? leaf_indices_.at(std::to_string(site_i))
-                  : tensor_tensor_->dimension(0) - 1;
-    int index_j = leaf_indices_.count(std::to_string(site_j))
-                  ? leaf_indices_.at(std::to_string(site_j))
-                  : tensor_tensor_->dimension(2) - 1;
+    // Check which tensor variant is present
+    if (tensor_tensor_) {
+        // Handle tensor_tensor (3D tensor)
+        Eigen::Tensor<std::complex<double>, 3> tensor = *tensor_tensor_;
 
-    std::cout << "Indices for expansion: [" << index_i << ", " << index_j << "]" << std::endl;
+        // Identify indices for expansion
+        int index_i = leaf_indices_.count(std::to_string(site_i))
+                      ? leaf_indices_.at(std::to_string(site_i))
+                      : tensor.dimension(0) - 1;
+        int index_j = leaf_indices_.count(std::to_string(site_j))
+                      ? leaf_indices_.at(std::to_string(site_j))
+                      : tensor.dimension(2) - 1;
 
-    // Expand and contract dynamically
-    for (int idx : {index_i, index_j}) {
-        // Get current dimensions
-        Eigen::array<Eigen::Index, 3> current_dims = {
-            tensor_tensor_->dimension(0),
-            tensor_tensor_->dimension(1),
-            tensor_tensor_->dimension(2)};
-        std::cout << "Current tensor dimensions before expansion: ["
-                  << current_dims[0] << "x" << current_dims[1] << "x" << current_dims[2] << "]"
-                  << std::endl;
+        std::cout << "Indices for expansion: [" << index_i << ", " << index_j << "]" << std::endl;
 
-        // Expand the specified dimension
-        Eigen::array<Eigen::Index, 3> expanded_dims = current_dims;
-        expanded_dims[idx] *= gate_dim;
+        // Perform the expansion and contraction process
+        Eigen::array<Eigen::Index, 3> current_dims = {tensor.dimension(0), tensor.dimension(1), tensor.dimension(2)};
+        for (int idx : {index_i, index_j}) {
+            // Expand dimensions by gate_dim
+            Eigen::array<Eigen::Index, 3> expanded_dims = current_dims;
+            expanded_dims[idx] *= gate_dim;
 
-        Eigen::Tensor<std::complex<double>, 3> expanded_tensor(expanded_dims);
-        expanded_tensor.setZero();
+            // Create expanded tensor with zero initialization
+            Eigen::Tensor<std::complex<double>, 3> expanded_tensor(expanded_dims);
+            expanded_tensor.setZero();
 
-        for (int i = 0; i < current_dims[0]; ++i) {
-            for (int j = 0; j < current_dims[1]; ++j) {
-                for (int k = 0; k < current_dims[2]; ++k) {
-                    for (int g = 0; g < gate_dim; ++g) {
-                        if (idx == 0) {
-                            expanded_tensor(i * gate_dim + g, j, k) = tensor_tensor_->operator()(i, j, k);
-                        } else if (idx == 1) {
-                            expanded_tensor(i, j * gate_dim + g, k) = tensor_tensor_->operator()(i, j, k);
-                        } else if (idx == 2) {
-                            expanded_tensor(i, j, k * gate_dim + g) = tensor_tensor_->operator()(i, j, k);
+            // Copy data from the original tensor
+            for (int i = 0; i < current_dims[0]; ++i) {
+                for (int j = 0; j < current_dims[1]; ++j) {
+                    for (int k = 0; k < current_dims[2]; ++k) {
+                        for (int g = 0; g < gate_dim; ++g) {
+                            if (idx == 0) {
+                                expanded_tensor(i * gate_dim + g, j, k) = tensor(i, j, k);
+                            } else if (idx == 1) {
+                                expanded_tensor(i, j * gate_dim + g, k) = tensor(i, j, k);
+                            } else if (idx == 2) {
+                                expanded_tensor(i, j, k * gate_dim + g) = tensor(i, j, k);
+                            }
                         }
                     }
                 }
             }
+
+            std::cout << "Expanded tensor dimensions: [" << expanded_tensor.dimension(0)
+                      << "x" << expanded_tensor.dimension(1) << "x"
+                      << expanded_tensor.dimension(2) << "]" << std::endl;
+
+            // Perform contraction using identity matrix
+            Eigen::Tensor<std::complex<double>, 2> identity(gate_dim, gate_dim);
+            identity.setZero();
+            for (int i = 0; i < gate_dim; ++i) {
+                identity(i, i) = std::complex<double>(1.0, 0.0);
+            }
+
+            Eigen::Tensor<std::complex<double>, 3> contracted_tensor =
+                expanded_tensor.contract(identity, Eigen::array<Eigen::IndexPair<int>, 1>{{Eigen::IndexPair<int>(idx, 0)}});
+
+            tensor = contracted_tensor;
+            current_dims[idx] = tensor.dimension(idx);
+
+            std::cout << "Contracted tensor dimensions: [" << tensor.dimension(0)
+                      << "x" << tensor.dimension(1) << "x"
+                      << tensor.dimension(2) << "]" << std::endl;
         }
 
-        std::cout << "Tensor dimensions after expansion: [" << expanded_dims[0] << "x"
-                  << expanded_dims[1] << "x" << expanded_dims[2] << "]" << std::endl;
+        // Update tensor_tensor
+        *tensor_tensor_ = tensor;
+        std::cout << "Final tensor_tensor dimensions: [" << tensor.dimension(0)
+                  << "x" << tensor.dimension(1) << "x" << tensor.dimension(2) << "]" << std::endl;
 
-        // Create identity tensor for contraction
-        Eigen::Tensor<std::complex<double>, 2> identity(gate_dim, gate_dim);
-        identity.setZero();
-        for (int i = 0; i < gate_dim; ++i) {
-            identity(i, i) = std::complex<double>(1.0, 0.0);  // Set diagonal to 1
-        }
+    } else if (tensor_matrix_) {
+        // Handle tensor_matrix (2D tensor)
+        Eigen::MatrixXcd matrix = *tensor_matrix_;
 
-        // Perform contraction
-        Eigen::array<Eigen::IndexPair<int>, 1> contraction_pair = {Eigen::IndexPair<int>(idx, 0)};
-        Eigen::Tensor<std::complex<double>, 3> contracted_tensor =
-            expanded_tensor.contract(identity, contraction_pair);
+        std::cout << "Processing tensor_matrix with dimensions: (" << matrix.rows()
+                  << "x" << matrix.cols() << ")" << std::endl;
 
-        tensor_tensor_ = contracted_tensor;
+        // Expand the matrix
+        Eigen::MatrixXcd expanded_matrix = Eigen::kroneckerProduct(Eigen::MatrixXcd::Identity(gate_dim, gate_dim), matrix);
+        std::cout << "Expanded matrix dimensions: (" << expanded_matrix.rows() << "x"
+                  << expanded_matrix.cols() << ")" << std::endl;
 
-        std::cout << "Tensor dimensions after contraction along index " << idx << ": ["
-                  << tensor_tensor_->dimension(0) << "x" << tensor_tensor_->dimension(1) << "x"
-                  << tensor_tensor_->dimension(2) << "]" << std::endl;
+        // Update tensor_matrix
+        *tensor_matrix_ = expanded_matrix;
+        std::cout << "Final tensor_matrix dimensions: (" << expanded_matrix.rows() << "x"
+                  << expanded_matrix.cols() << ")" << std::endl;
+
+    } else {
+        throw std::runtime_error("TNode has no tensor_tensor or tensor_matrix present for update.");
     }
-
-    // Final tensor dimensions
-    std::cout << "Final tensor dimensions after update: [" << tensor_tensor_->dimension(0)
-              << "x" << tensor_tensor_->dimension(1) << "x" << tensor_tensor_->dimension(2)
-              << "]" << std::endl;
 }
 
 std::vector<int> TNode::getTensorDimensions() const {

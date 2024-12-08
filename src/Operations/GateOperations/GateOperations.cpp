@@ -16,7 +16,6 @@ void GateOperations::applySingleParticleGate(TTN& psi, const Eigen::MatrixXcd& g
     psi.getTNodeRoot()->getItem(std::to_string(site))->applyGate(gate_matrix);
 }
 
-// Function to reshape a 2D matrix to a 4D-like structure and transpose it accordingly
 Eigen::MatrixXcd reshapeAndTransposeMatrix(const Eigen::MatrixXcd& matrix, int local_dimension) {
     // Reshape matrix to 4D-like structure by manually rearranging the elements
     Eigen::MatrixXcd reshaped_matrix(local_dimension * local_dimension, local_dimension * local_dimension);
@@ -34,20 +33,25 @@ Eigen::MatrixXcd reshapeAndTransposeMatrix(const Eigen::MatrixXcd& matrix, int l
     return reshaped_matrix;
 }
 
-// Function to reshape matrix similar to numpy.reshape (3D reshape)
 std::vector<Eigen::MatrixXcd> reshapeMatrixTo3D(const Eigen::MatrixXcd& matrix, int dim1, int dim2, int dim3) {
     assert(matrix.size() == dim1 * dim2 * dim3);
-    std::vector<Eigen::MatrixXcd> tensor3D(dim3, Eigen::MatrixXcd(dim1, dim2));
-    int index = 0;
 
+    // Map the flat data of the matrix into a tensor representation
+    Eigen::TensorMap<Eigen::Tensor<const std::complex<double>, 3>> tensor_map(
+        matrix.data(), dim1, dim2, dim3);
+
+    // Prepare a vector of Eigen::MatrixXcd to store the slices
+    std::vector<Eigen::MatrixXcd> tensor3D(dim3, Eigen::MatrixXcd(dim1, dim2));
+
+    // Copy each slice from the tensor into an Eigen::MatrixXcd
     for (int k = 0; k < dim3; ++k) {
         for (int i = 0; i < dim1; ++i) {
             for (int j = 0; j < dim2; ++j) {
-                tensor3D[k](i, j) = matrix(index);
-                ++index;
+                tensor3D[k](i, j) = tensor_map(i, j, k);
             }
         }
     }
+
     return tensor3D;
 }
 
@@ -59,7 +63,9 @@ std::tuple<std::vector<Eigen::MatrixXcd>, Eigen::VectorXd, std::vector<Eigen::Ma
     Eigen::JacobiSVD<Eigen::MatrixXcd> svd(reshaped_gate_matrix, Eigen::ComputeThinU | Eigen::ComputeThinV);
     Eigen::MatrixXcd u_matrix = svd.matrixU();
     Eigen::MatrixXcd v_matrix = svd.matrixV().adjoint();  // Equivalent to transpose in complex space
+
     Eigen::VectorXd singular_values = svd.singularValues();
+    std::cout << "Singular values: " << singular_values.transpose() << std::endl;
 
     // Step 3: Filter small singular values
     Eigen::VectorXd::Index num_nonzero = (singular_values.array() > 1e-14).count();
@@ -132,16 +138,6 @@ void GateOperations::applyTwoParticleGate(TTN& psi, const Eigen::MatrixXcd& gate
         node->update(gate_dim, site_i, site_j);
         auto end_time = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
-
-        if (duration > 10000) {
-            std::cerr << "Wiring of " << node->getName() << " with shape ";
-            printTensorDimensions(node->getTensor());
-            std::cerr << " took " << duration / 1000 << " seconds" << std::endl;
-        } else {
-            std::cout << "Wiring of " << node->getName() << " with shape ";
-            printTensorDimensions(node->getTensor());
-            std::cout << " took " << duration / 1000 << " seconds" << std::endl;
-        }
     }
 }
 

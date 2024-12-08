@@ -9,7 +9,7 @@ TreeStructure::TreeStructure(int clusters, int max_dim, int max_leaves, int sum_
 
 std::shared_ptr<SNode> findBestStructure(std::unordered_map<std::shared_ptr<SNode>, TreeStructure>& structures, int bound) {
     // Sort the structures by the desired properties
-    std::vector<std::pair<std::shared_ptr<SNode>, TreeStructure>> sorted_structures(structures.begin(), structures.en   d());
+    std::vector<std::pair<std::shared_ptr<SNode>, TreeStructure>> sorted_structures(structures.begin(), structures.end());
     std::sort(sorted_structures.begin(), sorted_structures.end(), [](const auto& a, const auto& b) {
         int a_value = a.second.sum_prod_dims;
         int b_value = b.second.sum_prod_dims;
